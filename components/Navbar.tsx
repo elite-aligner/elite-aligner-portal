@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClientSupabase } from '@/lib/supabase'
-import { Smile, Menu, X, LogOut, LayoutDashboard, FolderOpen, PlusCircle } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, FolderOpen, PlusCircle } from 'lucide-react'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -43,8 +43,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2">
-              <Smile className="h-8 w-8 text-dental" />
-              <span className="text-xl font-bold text-gray-900">Elite Aligner</span>
+              <img src="/logo.png" alt="PMC Elite Aligner" className="h-10 w-auto" />
             </Link>
           </div>
 
@@ -68,7 +67,7 @@ export function Navbar() {
                 </Link>
               )
             })}
-
+            
             {user ? (
               <div className="flex items-center gap-4 mr-4">
                 <span className="text-sm text-gray-600">{user.email}</span>
