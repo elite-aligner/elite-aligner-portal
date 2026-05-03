@@ -37,7 +37,7 @@ export default function LoginPage() {
         <div className="card">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-  <img src="/logo.jpg" alt="Elite Aligner" className="h-full w-full object-cover" />
+  <img src="https://elite-aligner-portal.vercel.app/logo.jpg" alt="Elite Aligner" className="h-20 mx-auto mb-4" />
 </div>
             <h1 className="text-2xl font-bold text-gray-900">تسجيل الدخول</h1>
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
