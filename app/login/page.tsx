@@ -16,37 +16,22 @@ export default function LoginPage() {
   const supabase = createClientSupabase()
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-    try {
-      // التحقق من وجود البريد في جدول doctors
-      const { data: userData, error: userError } = await supabase
-        .from('doctors')
-        .select('*')
-        .eq('email', email)
-        .single()
+  try {
+    // حل مؤقت: تسجيل دخول مباشر بدون أي تحقق
+    router.push('/dashboard')
+    router.refresh()
+    return
 
-      if (userError || !userData) {
-        setError('البريد الإلكتروني غير مسجل')
-        setLoading(false)
-        return
-      }
-
-      // TODO: التحقق من كلمة المرور لاحقاً
-      // حالياً: تسجيل دخول مباشر إذا البريد موجود
-
-      // نجاح تسجيل الدخول
-      router.push('/dashboard')
-      router.refresh()
-
-    } catch (err: any) {
-      setError('حدث خطأ أثناء تسجيل الدخول')
-    } finally {
-      setLoading(false)
-    }
+  } catch (err: any) {
+    setError('حدث خطأ أثناء تسجيل الدخول')
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dental-light to-white px-4">
