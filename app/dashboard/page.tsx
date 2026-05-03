@@ -33,6 +33,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // التحقق من localStorage أولاً (من تسجيل الدخول المؤقت)
+      const localUser = localStorage.getItem('user')
+      if (localUser) {
+        setUser(JSON.parse(localUser))
+        fetchCases()
+        setLoading(false)
+        return
+      }
+
+      // إذا لا يوجد، تحقق من Supabase Auth
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -40,40 +50,39 @@ export default function DashboardPage() {
       }
       setUser(user)
       fetchCases()
-    }
-    checkAuth()
-  }, [])
-
-  const fetchCases = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      const casesData = data || []
-      setCases(casesData)
-      setStats({
-        total: casesData.length,
-        pending: casesData.filter((c: Case) => c.status === 'pending').length,
-        approved: casesData.filter((c: Case) => c.status === 'approved').length,
-        rejected: casesData.filter((c: Case) => c.status === 'rejected').length,
-      })
-    } catch (error) {
-      console.error('Error fetching cases:', error)
-    } finally {
       setLoading(false)
     }
+
+    checkAuth()
+  }, [router, supabase])
+
+  const fetchCases = async () => {
+    const { data, error } = await supabase
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching cases:', error)
+      return
+    }
+
+    setCases(data || [])
+    
+    // Calculate stats
+    const total = data?.length || 0
+    const pending = data?.filter((c: Case) => c.status === 'pending').length || 0
+    const approved = data?.filter((c: Case) => c.status === 'approved').length || 0
+    const rejected = data?.filter((c: Case) => c.status === 'rejected').length || 0
+
+    setStats({ total, pending, approved, rejected })
   }
 
-  const statCards = [
-    { label: 'إجمالي الحالات', value: stats.total, icon: FolderOpen, color: 'bg-blue-50 text-blue-600' },
-    { label: 'قيد المراجعة', value: stats.pending, icon: Clock, color: 'bg-yellow-50 text-yellow-600' },
-    { label: 'معتمدة', value: stats.approved, icon: CheckCircle, color: 'bg-green-50 text-green-600' },
-    { label: 'مرفوضة', value: stats.rejected, icon: TrendingUp, color: 'bg-red-50 text-red-600' },
-  ]
+  const handleLogout = async () => {
+    localStorage.removeItem('user')
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   if (loading) {
     return (
@@ -84,99 +93,149 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">لوحة التحكم</h1>
-          <p className="text-gray-600 mt-1">مرحباً بك، {user?.user_metadata?.full_name || user?.email}</p>
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-2 text-dental hover:text-dental-dark">
+                <ArrowLeft className="h-5 w-5" />
+                <span>العودة للرئيسية</span>
+              </Link>
+              <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600">{user?.email || 'مستخدم'}</span>
+              <button
+                onClick={handleLogout}
+                className="btn-secondary text-sm"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
         </div>
-        <Link href="/cases/new" className="btn-primary flex items-center gap-2 w-fit">
-          <Plus className="h-5 w-5" />
-          حالة جديدة
-        </Link>
-      </div>
+      </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <div key={index} className="card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                  <Icon className="h-6 w-6" />
-                </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="card bg-white">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <FolderOpen className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-gray-600">إجمالي الحالات</p>
               </div>
             </div>
-          )
-        })}
-      </div>
+          </div>
 
-      {/* Recent Cases */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">أحدث الحالات</h2>
-          <Link href="/cases" className="text-dental hover:text-dental-dark text-sm font-medium flex items-center gap-1">
-            عرض الكل
-            <ArrowLeft className="h-4 w-4" />
+          <div className="card bg-white">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                <p className="text-gray-600">قيد الانتظار</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-white">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
+                <p className="text-gray-600">معتمدة</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-white">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
+                <p className="text-gray-600">مرفوضة</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-bold text-gray-900">الحالات</h2>
+          <Link href="/upload" className="btn-primary flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            رفع حالة جديدة
           </Link>
         </div>
 
-        {cases.length === 0 ? (
-          <div className="text-center py-12">
-            <ImageIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">لا توجد حالات مسجلة بعد</p>
-            <Link href="/cases/new" className="btn-primary inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              إضافة أول حالة
-            </Link>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">المريض</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">نوع الحالة</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">الحالة</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">التاريخ</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">الإجراء</th>
+        {/* Cases Table */}
+        <div className="card bg-white overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">المريض</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">التاريخ</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {cases.map((caseItem) => (
+                <tr key={caseItem.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <Users className="h-5 w-5 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{caseItem.patient_name}</p>
+                        <p className="text-sm text-gray-500">{caseItem.doctor_name}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(caseItem.status)}`}>
+                      {getStatusLabel(caseItem.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {formatDate(caseItem.created_at)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/view/${caseItem.id}`}
+                      className="text-dental hover:text-dental-dark font-medium"
+                    >
+                      عرض
+                    </Link>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {cases.slice(0, 5).map((caseItem) => (
-                  <tr key={caseItem.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900">{caseItem.patient_name}</div>
-                      <div className="text-sm text-gray-500">{caseItem.patient_age} سنة</div>
-                    </td>
-                    <td className="py-3 px-4 text-gray-600">{caseItem.case_type}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(caseItem.status)}`}>
-                        {getStatusLabel(caseItem.status)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-500 text-sm">{formatDate(caseItem.created_at)}</td>
-                    <td className="py-3 px-4">
-                      <Link
-                        href={`/cases/${caseItem.id}`}
-                        className="text-dental hover:text-dental-dark text-sm font-medium"
-                      >
-                        عرض التفاصيل
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              ))}
+            </tbody>
+          </table>
+
+          {cases.length === 0 && (
+            <div className="text-center py-12">
+              <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">لا توجد حالات بعد</p>
+              <Link href="/upload" className="text-dental hover:text-dental-dark mt-2 inline-block">
+                رفع حالة جديدة
+              </Link>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   )
 }
