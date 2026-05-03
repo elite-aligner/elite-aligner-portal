@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Smile, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,12 +20,8 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // تسجيل دخول مباشر - حل مؤقت
       localStorage.setItem('user', JSON.stringify({ email: email, loggedIn: true }))
-      
-      // انتقال مباشر بدون router
       window.location.href = '/dashboard'
-      
     } catch (err: any) {
       setError('حدث خطأ')
     } finally {
@@ -35,18 +33,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dental-light to-white px-4">
       <div className="w-full max-w-md">
         <div className="card">
+          {/* الشعار */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-  import Image from 'next/image'
-
-<Image 
-  src="/logo.jpg" 
-  alt="Elite Aligner" 
-  width={80} 
-  height={80} 
-  className="mx-auto mb-4"
-/>
-</div>
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <Image
+                src="/logo.jpg"
+                alt="Elite Aligner"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-2xl font-bold text-gray-900">تسجيل الدخول</h1>
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
           </div>
