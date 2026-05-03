@@ -21,10 +21,21 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // التحقق من البريد فقط (بدون كلمة مرور مؤقتاً)
+const { data: userData } = await supabase
+  .from('doctors')
+  .select('*')
+  .eq('email', email)
+  .single()
+
+if (userData) {
+  // نجاح تسجيل الدخول
+  router.push('/dashboard')
+  return
+} else {
+  setError('البريد الإلكتروني غير مسجل')
+  return
+}
 
       if (error) throw error
 
