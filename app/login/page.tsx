@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClientSupabase } from '@/lib/supabase'
 import { Smile, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -12,32 +11,30 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
-  const supabase = createClientSupabase()
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
-  setError('')
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-  try {
-    // حل مؤقت: تسجيل دخول مباشر بدون أي تحقق
-    router.push('/dashboard')
-    router.refresh()
-    return
-
-  } catch (err: any) {
-    setError('حدث خطأ أثناء تسجيل الدخول')
-  } finally {
-    setLoading(false)
+    try {
+      // تسجيل دخول مباشر - حل مؤقت
+      localStorage.setItem('user', JSON.stringify({ email: email, loggedIn: true }))
+      
+      // انتقال مباشر بدون router
+      window.location.href = '/dashboard'
+      
+    } catch (err: any) {
+      setError('حدث خطأ')
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dental-light to-white px-4">
       <div className="w-full max-w-md">
         <div className="card">
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-dental-light rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Smile className="h-8 w-8 text-dental" />
@@ -46,14 +43,12 @@ export default function LoginPage() {
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {error}
             </div>
           )}
 
-          {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="label">البريد الإلكتروني</label>
@@ -92,16 +87,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300 text-dental focus:ring-dental" />
-                <span className="text-gray-600">تذكرني</span>
-              </label>
-              <Link href="/forgot-password" className="text-dental hover:text-dental-dark">
-                نسيت كلمة المرور؟
-              </Link>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -110,7 +95,7 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  جاري تسجيل الدخول...
+                  جاري...
                 </>
               ) : (
                 'تسجيل الدخول'
@@ -121,7 +106,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm text-gray-600">
             ليس لديك حساب؟{' '}
             <Link href="/register" className="text-dental hover:text-dental-dark font-medium">
-              إنشاء حساب جديد
+              إنشاء حساب
             </Link>
           </div>
         </div>
