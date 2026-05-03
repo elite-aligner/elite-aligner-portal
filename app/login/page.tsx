@@ -36,9 +36,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="card">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-dental-light rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Smile className="h-8 w-8 text-dental" />
-            </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+  <img src="/logo.jpg" alt="Elite Aligner" className="h-full w-full object-cover" />
+</div>
             <h1 className="text-2xl font-bold text-gray-900">تسجيل الدخول</h1>
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
           </div>
