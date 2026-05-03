@@ -21,30 +21,28 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // التحقق من البريد فقط (بدون كلمة مرور مؤقتاً)
-const { data: userData } = await supabase
-  .from('doctors')
-  .select('*')
-  .eq('email', email)
-  .single()
+      // التحقق من وجود البريد في جدول doctors
+      const { data: userData, error: userError } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('email', email)
+        .single()
 
-if (userData) {
-  // نجاح تسجيل الدخول
-  router.push('/dashboard')
-  return
-} else {
-  setError('البريد الإلكتروني غير مسجل')
-  return
-}
+      if (userError || !userData) {
+        setError('البريد الإلكتروني غير مسجل')
+        setLoading(false)
+        return
+      }
 
-      if (error) throw error
+      // TODO: التحقق من كلمة المرور لاحقاً
+      // حالياً: تسجيل دخول مباشر إذا البريد موجود
 
+      // نجاح تسجيل الدخول
       router.push('/dashboard')
       router.refresh()
+
     } catch (err: any) {
-      setError(err.message === 'Invalid login credentials' 
-        ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' 
-        : 'حدث خطأ أثناء تسجيل الدخول')
+      setError('حدث خطأ أثناء تسجيل الدخول')
     } finally {
       setLoading(false)
     }
