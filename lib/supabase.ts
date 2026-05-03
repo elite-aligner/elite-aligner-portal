@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { Case } from '@/types'
 
-// المفاتيح مباشرة في الكود
-const supabaseUrl = 'https://ogysyioeyyszdzhciau.supabase.co'
-const supabaseAnonKey = 'sb_publishable_0drLNWdB48knxLuh7bzlVQ_nWRCaiXT'
+// استخدام متغيرات البيئة
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 // Client-side supabase
 export const createClientSupabase = () => {
