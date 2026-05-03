@@ -35,15 +35,13 @@ export default function LoginPage() {
         <div className="card">
           {/* الشعار */}
           <div className="text-center mb-8">
-            <div className="relative w-20 h-20 mx-auto mb-4">
-              <Image
-                src="/logo.jpg"
-                alt="Elite Aligner"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+            <div className="text-center mb-8">
+  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+    <span className="text-white text-2xl font-bold">EA</span>
+  </div>
+  <h1 className="text-2xl font-bold text-gray-900">Elite Aligner</h1>
+  <p className="text-gray-600 mt-2">أهلاً بك</p>
+</div>
             <h1 className="text-2xl font-bold text-gray-900">تسجيل الدخول</h1>
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
           </div>
