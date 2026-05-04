@@ -38,12 +38,13 @@ export default function LoginPage() {
               src="/elite.jpg" 
               alt="Elite Aligner" 
               style={{ 
-                width: '80px', 
-                height: '80px', 
-                borderRadius: '16px',
+                width: '100px', 
+                height: '100px', 
+                borderRadius: '20px',
                 margin: '0 auto 16px auto',
                 display: 'block',
-                objectFit: 'cover'
+                objectFit: 'cover',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
               }} 
             />
             <h1 className="text-2xl font-bold text-gray-900">Elite Aligner</h1>
