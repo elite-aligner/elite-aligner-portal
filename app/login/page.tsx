@@ -34,18 +34,18 @@ export default function LoginPage() {
         <div className="card">
           {/* الشعار */}
           <div className="text-center mb-8">
-            <div style={{
-              width: '80px',
-              height: '80px',
-              background: 'linear-gradient(135deg, #1e3c72, #2a5298)',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px auto'
-            }}>
-              <span style={{ color: 'white', fontSize: '28px', fontWeight: 'bold' }}>EA</span>
-            </div>
+            <img 
+              src="/elite.jpg" 
+              alt="Elite Aligner" 
+              style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: '16px',
+                margin: '0 auto 16px auto',
+                display: 'block',
+                objectFit: 'cover'
+              }} 
+            />
             <h1 className="text-2xl font-bold text-gray-900">Elite Aligner</h1>
             <p className="text-gray-600 mt-2">أهلاً بك في Elite Aligner</p>
           </div>
