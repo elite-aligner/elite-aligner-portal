@@ -43,7 +43,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="PMC Elite Aligner" className="h-10 w-auto" />
+              <img src="/elite.jpg" alt="PMC Elite Aligner" className="h-10 w-auto" />
             </Link>
           </div>
 
