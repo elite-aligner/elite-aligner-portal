@@ -1,7 +1,5 @@
-// @ts-nocheck
- components/STLViewer.tsx
 'use client';
-
+//  @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
