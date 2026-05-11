@@ -1,30 +1,24 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { Navbar } from '@/components/Navbar'
-import { Toaster } from '@/components/Toaster'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Elite Aligner - بوابة حالات التقويم الشفاف',
-  description: 'منصة مشاركة حالات التقويم الشفاف للأطباء',
-}
+  title: "Elite Aligner Portal",
+  description: "بوابة تقويم الأسنان المتقدمة",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="ar" dir="rtl">
       <body className={inter.className}>
-        <Navbar />
-        <main className="min-h-screen pt-16">
-          {children}
-        </main>
-        <Toaster />
+        {children}
       </body>
     </html>
-  )
+  );
 }
