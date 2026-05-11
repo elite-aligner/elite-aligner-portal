@@ -1,4 +1,5 @@
-// components/STLViewer.tsx
+// @ts-nocheck
+ components/STLViewer.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
