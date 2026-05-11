@@ -1,12 +1,12 @@
-// app/viewer/page.tsx
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Shield, X, ExternalLink } from 'lucide-react';
 import STLViewer from '../../components/STLViewer';
 
-export default function ViewerPage() {
+function ViewerContent() {
   const searchParams = useSearchParams();
   const [url, setUrl] = useState('');
   const [error, setError] = useState(false);
@@ -80,5 +80,17 @@ export default function ViewerPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ViewerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-lg">جاري التحميل...</div>
+      </div>
+    }>
+      <ViewerContent />
+    </Suspense>
   );
 }
