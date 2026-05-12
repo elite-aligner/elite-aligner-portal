@@ -21,6 +21,7 @@ export default function LoginPage() {
     try {
       const supabase = createClientSupabase();
       
+      // 1. تسجيل الدخول في Supabase Auth (التشفير تلقائي!)
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,7 +33,7 @@ export default function LoginPage() {
         throw new Error('لم يتم العثور على المستخدم');
       }
 
-      // التحقق من وجود الطبيب في جدول doctors
+      // 2. جلب بيانات الطبيب من جدول doctors
       const { data: doctorData, error: doctorError } = await supabase
         .from('doctors')
         .select('*')
@@ -43,7 +44,7 @@ export default function LoginPage() {
         throw new Error('هذا المستخدم غير مسجل كطبيب');
       }
 
-      // حفظ بيانات المستخدم
+      // 3. حفظ بيانات المستخدم
       localStorage.setItem('elite-aligner-user', JSON.stringify({
         id: data.user.id,
         email: data.user.email,
@@ -51,7 +52,7 @@ export default function LoginPage() {
         role: doctorData.role,
       }));
 
-      // التوجيه حسب الدور
+      // 4. التوجيه حسب الدور
       if (doctorData.role === 'admin') {
         router.push('/admin');
       } else {
