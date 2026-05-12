@@ -35,7 +35,7 @@ export default function RegisterDoctorPage() {
         id: authData.user?.id,
         email,
         name,
-        role: 'doctor', // دائماً طبيب
+        role: 'doctor',
       });
 
       if (dbError) throw dbError;
