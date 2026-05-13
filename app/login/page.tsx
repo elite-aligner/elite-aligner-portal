@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Eye, EyeOff } from 'lucide-react';
-import { createClientSupabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,45 +18,22 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const supabase = createClientSupabase();
-      
-      // 1. تسجيل الدخول في Supabase Auth (التشفير تلقائي!)
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // استخدم API Route بدل Supabase مباشرة
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) throw authError;
+      const data = await response.json();
+      
+      if (data.error) throw new Error(data.error);
 
-      if (!data.user) {
-        throw new Error('لم يتم العثور على المستخدم');
-      }
+      // حفظ بيانات المستخدم
+      localStorage.setItem('elite-aligner-user', JSON.stringify(data.user));
 
-      // 2. جلب بيانات الطبيب من جدول doctors
-      const { data: doctorData, error: doctorError } = await supabase
-        .from('doctors')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      if (doctorError || !doctorData) {
-        throw new Error('هذا المستخدم غير مسجل كطبيب');
-      }
-
-      // 3. حفظ بيانات المستخدم
-      localStorage.setItem('elite-aligner-user', JSON.stringify({
-        id: data.user.id,
-        email: data.user.email,
-        name: doctorData.name,
-        role: doctorData.role,
-      }));
-
-      // 4. التوجيه حسب الدور
-      if (doctorData.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/doctor');
-      }
+      // التوجيه
+      router.push('/doctor');
     } catch (err: any) {
       setError(err.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
     } finally {
