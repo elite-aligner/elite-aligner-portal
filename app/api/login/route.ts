@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// ✅ استخدم القيم مباشرة - تم التحديث
-const supabaseUrl = 'https://ogysyioeyvsdzhelau.supabase.co';
-const supabaseKey = 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCaiXT';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ogysyioeyvsdzhelau.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCaiXT';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
