@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +18,6 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // استخدم API Route بدل Supabase مباشرة
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,11 +28,9 @@ export default function LoginPage() {
       
       if (data.error) throw new Error(data.error);
 
-      // حفظ بيانات المستخدم
       localStorage.setItem('elite-aligner-user', JSON.stringify(data.user));
-
-      // التوجيه
-      router.push('/doctor');
+      router.push('/dashboard');
+      
     } catch (err: any) {
       setError(err.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
     } finally {
@@ -43,26 +40,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4" dir="rtl">
-      {/* خلفية الشعار */}
-      <div className="absolute inset-0 opacity-5">
-        <img src="/logo.png" alt="" className="w-full h-full object-contain" />
-      </div>
-      
-      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 relative z-10">
-        {/* الشعار */}
+      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <img src="/logo.png" alt="Elite Aligner" className="w-16 h-16 rounded-full" />
-          </div>
           <h1 className="text-2xl font-bold text-gray-900">
             Elite <span className="text-teal-500">Aligner</span>
           </h1>
           <p className="text-gray-500 mt-2">تسجيل دخول الأطباء</p>
         </div>
 
-        {/* نموذج تسجيل الدخول */}
         <form onSubmit={handleLogin} className="space-y-6">
-          {/* البريد */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               البريد الإلكتروني
@@ -77,7 +63,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* كلمة المرور */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               كلمة المرور
@@ -102,7 +87,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* زر تسجيل الدخول */}
           <button
             type="submit"
             disabled={loading}
@@ -111,7 +95,6 @@ export default function LoginPage() {
             {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>
 
-          {/* خطأ */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <p className="text-red-600 text-sm text-center">{error}</p>
@@ -119,17 +102,11 @@ export default function LoginPage() {
           )}
         </form>
 
-        {/* روابط */}
-        <div className="mt-6 text-center space-y-2">
+        <div className="mt-6 text-center">
           <p className="text-gray-500 text-sm">
             ليس لديك حساب؟{' '}
             <a href="/register-doctor" className="text-teal-600 hover:underline font-medium">
               تسجيل طبيب جديد
-            </a>
-          </p>
-          <p className="text-gray-400 text-xs">
-            <a href="/" className="hover:text-gray-600">
-              العودة للصفحة الرئيسية
             </a>
           </p>
         </div>
