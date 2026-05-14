@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// ✅ استخدم SUPABASE_URL بدلاً من NEXT_PUBLIC_SUPABASE_URL في API Routes
 const supabaseUrl = process.env.SUPABASE_URL || 'https://sknybbyxencuhbenshk.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'sb_publishable_TqgzLzUYs9Hn9jyIAXUCOg_9TlGXlNO';
 
