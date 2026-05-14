@@ -1,14 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-const supabase = createClient(
-  'https://ogvsyioeyvsdzhelau.supabase.co',
-  'eyJhbGc1OiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndnN5aW9leXZzZHpoZWxhdSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzE1MjA0MjAwLCJleHAiOjIwMzA3ODAyMDB9...'
-);
+// ✅ استخدم القيم مباشرة - تم التحديث
+const supabaseUrl = 'https://ogysyioeyvsdzhelau.supabase.co';
+const supabaseKey = 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCaiXT';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
+    
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    }
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
