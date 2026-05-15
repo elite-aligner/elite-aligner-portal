@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-
-// ✅ قائمة المستخدمين (مؤقتاً - في الذاكرة)
-const USERS: any[] = [];
+import { USERS } from '@/lib/users';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +13,6 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ التحقق من عدم وجود المستخدم
     const existingUser = USERS.find(u => u.email === email);
     if (existingUser) {
       return NextResponse.json(
@@ -24,7 +21,6 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ إنشاء مستخدم جديد
     const newUser = {
       id: String(USERS.length + 1),
       name,

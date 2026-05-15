@@ -1,16 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-
-// ✅ قائمة المستخدمين (مؤقتاً)
-const USERS = [
-  {
-    id: '1',
-    email: 'panorama_farea@outlook.com',
-    password: '123456',
-    name: 'Dr. Panorama',
-    role: 'doctor'
-  }
-];
+import { USERS } from '@/lib/users';
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +13,6 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ البحث عن المستخدم
     const user = USERS.find(u => u.email === email && u.password === password);
     
     if (!user) {
@@ -33,7 +22,6 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ إنشاء توكن
     const token = btoa(`${user.id}:${Date.now()}`);
     
     return NextResponse.json({
