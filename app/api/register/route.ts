@@ -2,6 +2,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 
+// ✅ منع البناء المسبق
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { name, email, password } = await request.json();
