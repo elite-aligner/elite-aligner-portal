@@ -1,9 +1,8 @@
 // @ts-nocheck
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-
-// ✅ منع البناء المسبق
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
@@ -13,20 +12,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
     
-    const { data: authData, error: authError } = await supabaseServer.auth.signInWithPassword({
-      email,
-      password,
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    // ✅ استخدام fetch بدلاً من supabaseServer
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({ email, password })
     });
 
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    const authData = await authResponse.json();
+
+    if (!authResponse.ok) {
+      return NextResponse.json({ error: authData.message || 'Invalid credentials' }, { status: 401 });
     }
 
-    const { data: doctorData } = await supabaseServer
-      .from('doctors')
-      .select('id, email, name, role')
-      .eq('email', email)
-      .single();
+    // ✅ جلب بيانات الطبيب
+    const doctorResponse = await fetch(`${supabaseUrl}/rest/v1/doctors?email=eq.${email}&select=*`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      }
+    });
+
+    const doctors = await doctorResponse.json();
+    const doctorData = doctors[0];
 
     if (!doctorData) {
       return NextResponse.json({ error: 'Doctor not found' }, { status: 404 });
@@ -41,8 +56,8 @@ export async function POST(request: Request) {
         role: doctorData.role || 'doctor'
       },
       session: {
-        access_token: authData.session.access_token,
-        expires_at: authData.session.expires_at
+        access_token: authData.access_token,
+        expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000
       }
     });
     

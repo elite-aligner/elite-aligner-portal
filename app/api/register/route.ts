@@ -1,68 +1,59 @@
 // @ts-nocheck
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-
-// ✅ منع البناء المسبق
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { name, email, password } = await request.json();
     
     if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: 'Email, password and name are required' }, 
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' }, 
-        { status: 400 }
-      );
-    }
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    // ✅ إنشاء مستخدم في Supabase Auth
-    const { data: authData, error: authError } = await supabaseServer.auth.signUp({
-      email,
-      password,
+    // ✅ إنشاء مستخدم باستخدام fetch
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({ email, password })
     });
 
-    if (authError) {
-      return NextResponse.json(
-        { error: authError.message }, 
-        { status: 400 }
-      );
-    }
+    const authData = await authResponse.json();
 
-    if (!authData.user) {
-      return NextResponse.json(
-        { error: 'Failed to create user' }, 
-        { status: 500 }
-      );
+    if (!authResponse.ok) {
+      return NextResponse.json({ error: authData.message || 'Failed to create user' }, { status: 400 });
     }
 
     // ✅ إضافة للجدول doctors
-    const { data: doctorData, error: doctorError } = await supabaseServer
-      .from('doctors')
-      .insert([{ 
+    const doctorResponse = await fetch(`${supabaseUrl}/rest/v1/doctors`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
         id: authData.user.id,
-        email, 
-        name, 
-        role: 'doctor' 
-      }]);
+        email,
+        name,
+        role: 'doctor'
+      })
+    });
 
-    if (doctorError) {
-      return NextResponse.json(
-        { error: doctorError.message }, 
-        { status: 400 }
-      );
+    if (!doctorResponse.ok) {
+      return NextResponse.json({ error: 'Failed to add doctor' }, { status: 400 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Doctor registered successfully',
       user: {
         id: authData.user.id,
         email,
@@ -72,9 +63,6 @@ export async function POST(request: Request) {
     });
     
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || 'Internal server error' }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
