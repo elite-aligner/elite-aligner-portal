@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const runtime = 'edge';
+export const runtime = 'nodejs';  // ✅ تغيير من edge إلى nodejs
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
     
-    // ✅ URL مباشر (لا يعتمد على Environment Variables)
     const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
@@ -61,6 +60,7 @@ export async function POST(request: Request) {
     });
     
   } catch (err: any) {
+    console.error('Login error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

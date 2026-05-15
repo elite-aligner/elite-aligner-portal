@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const runtime = 'edge';
+export const runtime = 'nodejs';  // ✅ تغيير من edge إلى nodejs
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     });
     
   } catch (err: any) {
+    console.error('Register error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
