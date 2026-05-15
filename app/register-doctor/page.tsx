@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Eye, EyeOff } from 'lucide-react';
-import { createClientSupabase } from '@/lib/supabase';
 
 export default function RegisterDoctorPage() {
   const router = useRouter();
@@ -20,28 +19,19 @@ export default function RegisterDoctorPage() {
     setError('');
 
     try {
-      const supabase = createClientSupabase();
+      // ✅ استخدم API Route بدلاً من Supabase المباشر
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
       
-      // 1. إنشاء حساب في Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      if (data.error) throw new Error(data.error);
 
-      if (authError) throw authError;
-
-      // 2. إضافة الطبيب في جدول doctors
-      const { error: dbError } = await supabase.from('doctors').insert({
-        id: authData.user?.id,
-        email,
-        name,
-        role: 'doctor',
-      });
-
-      if (dbError) throw dbError;
-
-      // 3. التوجيه لصفحة الطبيب
-      router.push('/doctor');
+      // ✅ التوجيه لصفحة تسجيل الدخول
+      router.push('/login');
     } catch (err: any) {
       setError(err.message || 'حدث خطأ في التسجيل');
     } finally {
