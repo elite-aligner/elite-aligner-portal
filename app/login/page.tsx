@@ -3,7 +3,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 import { Eye, EyeOff } from 'lucide-react';
+
+// ✅ عميل Supabase مباشرة في المتصفح
+const supabase = createClient(
+  'https://sknybbyxencuhbenshk.supabase.co',
+  'sb_publishable_TqgzLzUYs9Hn9jyIAXUCOg_9TlGXlNO'
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,33 +26,41 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      // ✅ تسجيل الدخول مباشرة من المتصفح
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
-      
-      if (data.error) throw new Error(data.error);
+      if (authError) throw new Error(authError.message);
+      if (!authData.user) throw new Error('User not found');
+
+      // ✅ جلب بيانات الطبيب من جدول doctors
+      const { data: doctorData, error: doctorError } = await supabase
+        .from('doctors')
+        .select('id, email, name, role')
+        .eq('email', email)
+        .single();
+
+      if (doctorError || !doctorData) {
+        throw new Error('Doctor not found in database');
+      }
 
       // ✅ تخزين التوكن في الكوكيز
-      if (data.session?.access_token) {
-        const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
-        document.cookie = `elite-aligner-auth-token=${encodeURIComponent(data.session.access_token)}; expires=${expires}; path=/; SameSite=Lax`;
-      }
+      const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
+      document.cookie = `elite-aligner-auth-token=${encodeURIComponent(authData.session.access_token)}; expires=${expires}; path=/; SameSite=Lax`;
+      document.cookie = `elite-aligner-role=${encodeURIComponent(doctorData.role)}; expires=${expires}; path=/; SameSite=Lax`;
 
-      // ✅ تخزين الدور في الكوكيز (مهم للـ Middleware!)
-      if (data.user?.role) {
-        const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
-        document.cookie = `elite-aligner-role=${encodeURIComponent(data.user.role)}; expires=${expires}; path=/; SameSite=Lax`;
-      }
-
-      // ✅ تخزين في LocalStorage للاستخدام في الصفحات
-      localStorage.setItem('elite-aligner-user', JSON.stringify(data.user));
+      // ✅ تخزين في LocalStorage
+      localStorage.setItem('elite-aligner-user', JSON.stringify({
+        id: doctorData.id,
+        email: doctorData.email,
+        name: doctorData.name,
+        role: doctorData.role
+      }));
 
       // ✅ التوجيه حسب الدور
-      if (data.user?.role === 'admin') {
+      if (doctorData.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/doctor');
@@ -60,7 +75,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
-      {/* خلفية الشعار */}
       <div className="absolute inset-0 opacity-5">
         <img src="/logo.png" alt="" className="w-full h-full object-contain" />
       </div>
@@ -78,9 +92,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              البريد الإلكتروني
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
             <input
               type="email"
               value={email}
@@ -92,9 +104,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              كلمة المرور
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -138,9 +148,7 @@ export default function LoginPage() {
             </a>
           </p>
           <p className="text-gray-400 text-xs">
-            <a href="/" className="hover:text-gray-600">
-              العودة للصفحة الرئيسية
-            </a>
+            <a href="/" className="hover:text-gray-600">العودة للصفحة الرئيسية</a>
           </p>
         </div>
       </div>
