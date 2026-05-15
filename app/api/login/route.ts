@@ -1,8 +1,9 @@
 // @ts-nocheck
-export const runtime = 'nodejs';  // ✅ تغيير من edge إلى nodejs
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
@@ -12,36 +13,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
     
+    // ✅ إنشاء عميل Supabase مباشرة
     const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    const authResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      },
-      body: JSON.stringify({ email, password })
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // ✅ التحقق من Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const authData = await authResponse.json();
-
-    if (!authResponse.ok) {
-      return NextResponse.json({ error: authData.message || 'Invalid credentials' }, { status: 401 });
+    if (authError || !authData.user) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const doctorResponse = await fetch(`${supabaseUrl}/rest/v1/doctors?email=eq.${email}&select=*`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      }
-    });
+    // ✅ جلب بيانات الطبيب
+    const { data: doctorData, error: doctorError } = await supabase
+      .from('doctors')
+      .select('id, email, name, role')
+      .eq('email', email)
+      .single();
 
-    const doctors = await doctorResponse.json();
-    const doctorData = doctors[0];
-
-    if (!doctorData) {
+    if (doctorError || !doctorData) {
       return NextResponse.json({ error: 'Doctor not found' }, { status: 404 });
     }
 
@@ -54,8 +49,8 @@ export async function POST(request: Request) {
         role: doctorData.role || 'doctor'
       },
       session: {
-        access_token: authData.access_token,
-        expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000
+        access_token: authData.session.access_token,
+        expires_at: authData.session.expires_at
       }
     });
     
