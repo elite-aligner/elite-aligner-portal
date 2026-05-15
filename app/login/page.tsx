@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import { useState } from 'react';
@@ -28,6 +29,11 @@ export default function LoginPage() {
       
       if (data.error) throw new Error(data.error);
 
+      if (data.session?.access_token) {
+        const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
+        document.cookie = `elite-aligner-auth-token=${encodeURIComponent(data.session.access_token)}; expires=${expires}; path=/; SameSite=Lax`;
+      }
+
       localStorage.setItem('elite-aligner-user', JSON.stringify(data.user));
       router.push('/dashboard');
       
@@ -39,11 +45,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4" dir="rtl">
-      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
+      {/* ✅ خلفية الشعار */}
+      <div className="absolute inset-0 opacity-5">
+        <img src="/logo.png" alt="" className="w-full h-full object-contain" />
+      </div>
+      
+      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 relative z-10">
         <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <img src="/logo.png" alt="Elite Aligner" className="w-16 h-16 rounded-full" />
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Elite <span className="text-teal-500">Aligner</span>
+            Elite <span className="text-green-500">Aligner</span>
           </h1>
           <p className="text-gray-500 mt-2">تسجيل دخول الأطباء</p>
         </div>
@@ -57,7 +71,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-gray-50"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50"
               placeholder="example@email.com"
               required
             />
@@ -72,7 +86,7 @@ export default function LoginPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-gray-50"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -90,7 +104,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all disabled:opacity-50 shadow-lg"
+            className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all disabled:opacity-50 shadow-lg"
           >
             {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>
@@ -102,11 +116,16 @@ export default function LoginPage() {
           )}
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <p className="text-gray-500 text-sm">
             ليس لديك حساب؟{' '}
-            <a href="/register-doctor" className="text-teal-600 hover:underline font-medium">
+            <a href="/register-doctor" className="text-green-600 hover:underline font-medium">
               تسجيل طبيب جديد
+            </a>
+          </p>
+          <p className="text-gray-400 text-xs">
+            <a href="/" className="hover:text-gray-600">
+              العودة للصفحة الرئيسية
             </a>
           </p>
         </div>

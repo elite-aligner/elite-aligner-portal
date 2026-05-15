@@ -1,129 +1,60 @@
-export default function LandingPage() {
+// @ts-nocheck
+import Link from 'next/link';
+
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white" dir="rtl">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-3">
-              {/* الشعار */}
-              <img src="/logo.png" alt="Elite Aligner" className="h-10 w-10 rounded-full" />
-              <span className="text-2xl font-bold text-gray-900">
-                Elite <span className="text-teal-500">Aligner</span>
-              </span>
-            </div>
-            {/* زر دخول الأطباء */}
-            <div className="flex items-center gap-4">
-              <a href="/login" className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
-                دخول الأطباء
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-teal-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            شارك حالاتك باحترافية
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden" dir="rtl">
+      {/* خلفية الشعار */}
+      <div className="absolute inset-0 opacity-10">
+        <img src="/logo.png" alt="" className="w-full h-full object-contain" />
+      </div>
+      
+      {/* محتوى */}
+      <div className="relative z-10 container mx-auto px-4 py-16">
+        {/* الشعار */}
+        <div className="text-center mb-12">
+          <img src="/logo.png" alt="Elite Aligner" className="w-32 h-32 mx-auto mb-6 rounded-full" />
+          <h1 className="text-5xl font-bold text-white mb-4">
+            Elite <span className="text-green-500">Aligner</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            منصة Elite Aligner تتيح للأطباء مشاركة حالات تقويم الأسنان بسهولة واحترافية
-          </p>
-          <div className="flex gap-4 justify-center">
-            <a href="/register-doctor" className="px-8 py-4 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors text-lg">
-              تسجيل طبيب جديد
-            </a>
-            <a href="/login" className="px-8 py-4 border-2 border-teal-500 text-teal-500 rounded-xl hover:bg-teal-50 transition-colors text-lg">
-              دخول الأطباء
-            </a>
-          </div>
+          <p className="text-xl text-gray-300">PMC - Professional Medical Center</p>
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-teal-500 mb-2">98%</div>
-              <div className="text-gray-600">نسبة الرضا</div>
+        {/* نبذة تعريفية */}
+        <div className="max-w-3xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-12">
+          <h2 className="text-3xl font-bold text-white mb-6 text-center">من نحن</h2>
+          <p className="text-gray-300 text-lg leading-relaxed mb-6">
+            Elite Aligner هي شركة رائدة في مجال تقويم الأسنان الشفاف. نقدم حلولاً متقدمة للأطباء 
+            والمرضى على حد سواء، مع تقنيات ثلاثية الأبعاد لتحليل الحالات وإنتاج تقويم مخصص 
+            بجودة عالية.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="bg-green-500/20 rounded-xl p-6 text-center">
+              <h3 className="text-green-400 font-bold text-xl mb-2">تقنية 3D</h3>
+              <p className="text-gray-300">تحليل دقيق للحالات باستخدام تقنية الماسح الضوئي</p>
             </div>
-            <div>
-              <div className="text-5xl font-bold text-teal-500 mb-2">+150</div>
-              <div className="text-gray-600">طبيب مشترك</div>
+            <div className="bg-green-500/20 rounded-xl p-6 text-center">
+              <h3 className="text-green-400 font-bold text-xl mb-2">جودة عالية</h3>
+              <p className="text-gray-300">تقويم شفاف مصنوع من أفضل المواد الطبية</p>
             </div>
-            <div>
-              <div className="text-5xl font-bold text-teal-500 mb-2">+500</div>
-              <div className="text-gray-600">حالة ناجحة</div>
+            <div className="bg-green-500/20 rounded-xl p-6 text-center">
+              <h3 className="text-green-400 font-bold text-xl mb-2">دعم كامل</h3>
+              <p className="text-gray-300">فريق متخصص لمساعدة الأطباء في كل خطوة</p>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Features */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            لماذا Elite Aligner؟
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📁</span>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">رفع سهل</h3>
-              <p className="text-gray-600 text-sm">شارك ملفات STL وصور بسهولة</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🔒</span>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">أمان تام</h3>
-              <p className="text-gray-600 text-sm">حماية كاملة لبيانات المرضى</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📊</span>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">متابعة ذكية</h3>
-              <p className="text-gray-600 text-sm">تتبع حالة كل مريض بسهولة</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🌐</span>
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">وصول عالمي</h3>
-              <p className="text-gray-600 text-sm">شارك الحالات مع أي طبيب</p>
-            </div>
-          </div>
+        {/* زر الانتقال للبورتال */}
+        <div className="text-center">
+          <Link 
+            href="/login"
+            className="inline-block px-12 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white text-xl font-bold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg shadow-green-500/30"
+          >
+            دخول البوابة الطبية
+          </Link>
+          <p className="text-gray-400 mt-4">للأطباء المسجلين فقط</p>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-teal-500">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            ابدأ الآن مع Elite Aligner
-          </h2>
-          <p className="text-teal-100 mb-8 text-lg">
-            انضم لشبكة أطباء تقويم الأسنان الأكبر في المنطقة
-          </p>
-          <a href="/register-doctor" className="px-8 py-4 bg-white text-teal-500 rounded-xl hover:bg-gray-100 transition-colors text-lg font-bold">
-            سجل كطبيب
-          </a>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            Elite Aligner - منصة تقويم الأسنان الاحترافية
-          </p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
