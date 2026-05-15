@@ -12,16 +12,29 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ يقبل أي بريد وكلمة مرور (LocalStorage mode)
-    const token = btoa(`${email}:${Date.now()}`);
+    // ✅ قراءة من LocalStorage (عبر globalThis للـ Server)
+    const usersJson = (globalThis as any).usersStorage || '[]';
+    const users = JSON.parse(usersJson);
+    
+    // ✅ البحث في LocalStorage
+    const user = users.find((u: any) => u.email === email && u.password === password);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' }, 
+        { status: 401 }
+      );
+    }
+    
+    const token = btoa(`${user.id}:${Date.now()}`);
     
     return NextResponse.json({
       success: true,
       user: {
-        id: 'user-' + Date.now(),
-        email: email,
-        name: email.split('@')[0],
-        role: email === 'panorama_farea@outlook.com' ? 'admin' : 'doctor'
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role || 'doctor'
       },
       session: {
         access_token: token,
