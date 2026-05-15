@@ -3,193 +3,580 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Eye, FileBox } from 'lucide-react';
+
+const STEPS = [
+  { id: 1, title: 'Patient Information', titleAr: 'معلومات المريض' },
+  { id: 2, title: 'Images & Impressions', titleAr: 'الصور والانطباعات' },
+  { id: 3, title: 'Prescription', titleAr: 'الوصفة الطبية' },
+  { id: 4, title: 'Terms & Agreement', titleAr: 'الشروط والاتفاقية' },
+  { id: 5, title: 'Submission Completed', titleAr: 'تم الإرسال' },
+];
+
+const IMAGE_SLOTS = [
+  { id: 'full-face-relaxed', label: 'Full Face Relaxed', labelAr: 'وجه كامل - استرخاء' },
+  { id: 'full-face-smiling', label: 'Full Face Smiling', labelAr: 'وجه كامل - ابتسامة' },
+  { id: 'profile-relaxed', label: 'Profile Relaxed', labelAr: 'جانبي - استرخاء' },
+  { id: 'profile-smiling', label: 'Profile Smiling', labelAr: 'جانبي - ابتسامة' },
+  { id: 'right-buccal', label: 'Right Buccal', labelAr: 'جيب أيمن' },
+  { id: 'occlusion', label: 'Occlusion', labelAr: 'الإطباق' },
+  { id: 'left-buccal', label: 'Left Buccal', labelAr: 'جيب أيسر' },
+  { id: 'panoramic', label: 'Panoramic X-ray', labelAr: 'أشعة بانوراما' },
+  { id: 'upper-occlusal', label: 'Upper Occlusal', labelAr: 'إطباق علوي' },
+  { id: 'lower-occlusal', label: 'Lower Occlusal', labelAr: 'إطباق سفلي' },
+  { id: 'extras', label: 'Extras', labelAr: 'إضافية' },
+  { id: 'cephalometric', label: 'Cephalometric X-ray', labelAr: 'أشعة سيفالومترية' },
+];
 
 export default function NewCasePage() {
   const router = useRouter();
-  const [patientName, setPatientName] = useState('');
-  const [upperJaw, setUpperJaw] = useState<File | null>(null);
-  const [lowerJaw, setLowerJaw] = useState<File | null>(null);
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [patientData, setPatientData] = useState({
+    firstName: '',
+    lastName: '',
+    fileNumber: '',
+    gender: 'male',
+    dob: '',
+    address: '',
+  });
+  const [images, setImages] = useState<any>({});
+  const [impressions, setImpressions] = useState({
+    type: 'digital',
+    upperStl: null as File | null,
+    lowerStl: null as File | null,
+  });
+  const [prescription, setPrescription] = useState({
+    treatArches: 'both',
+    upperMidline: 'improve',
+    lowerMidline: 'improve',
+    overjet: 'improve',
+    overbite: 'improve',
+    canineRelationship: 'improve',
+    molarRelationship: 'maintain',
+    posteriorCrossbite: 'maintain',
+    ipr: 'ifNeeded',
+    attachments: 'ifNeeded',
+    procline: 'ifNeeded',
+    expand: 'ifNeeded',
+    distalize: 'ifNeeded',
+    chiefComplaint: '',
+    additionalNotes: '',
+    doNotMove: [] as number[],
+    avoidAttachments: [] as number[],
+    extract: [] as number[],
+    keepSpaces: [] as number[],
+  });
+  const [agreed, setAgreed] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const user = JSON.parse(localStorage.getItem('elite-aligner-user') || '{}');
-      
-      // ✅ إنشاء معرف فريد للحالة
-      const caseId = Date.now().toString();
-      
-      const newCase = {
-        id: caseId,
-        patientName,
-        upperJawFile: upperJaw ? upperJaw.name : null,
-        lowerJawFile: lowerJaw ? lowerJaw.name : null,
-        notes,
-        doctorEmail: user.email,
-        doctorName: user.name,
-        createdAt: new Date().toLocaleDateString('ar-SA'),
-        status: 'pending',
-        previewUrl: `/viewer/${caseId}`
-      };
-
-      // ✅ حفظ في localStorage
-      const existingCases = JSON.parse(localStorage.getItem('elite-aligner-cases') || '[]');
-      localStorage.setItem('elite-aligner-cases', JSON.stringify([...existingCases, newCase]));
-
-      // ✅ إنشاء رابط المعاينة
-      setPreviewUrl(`/viewer/${caseId}`);
-
-      router.push('/dashboard');
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handleImageUpload = (slotId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImages((prev: any) => ({ ...prev, [slotId]: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
+  const handleSubmit = () => {
+    const user = JSON.parse(localStorage.getItem('elite-aligner-user') || '{}');
+    const newCase = {
+      id: Date.now().toString(),
+      patientName: `${patientData.firstName} ${patientData.lastName}`,
+      fileNumber: patientData.fileNumber,
+      gender: patientData.gender,
+      dob: patientData.dob,
+      images,
+      impressions: {
+        type: impressions.type,
+        upperStl: impressions.upperStl?.name,
+        lowerStl: impressions.lowerStl?.name,
+      },
+      prescription,
+      doctorEmail: user.email,
+      doctorName: user.name,
+      createdAt: new Date().toLocaleDateString('ar-SA'),
+      status: 'pending',
+    };
+
+    const existingCases = JSON.parse(localStorage.getItem('elite-aligner-cases') || '[]');
+    localStorage.setItem('elite-aligner-cases', JSON.stringify([...existingCases, newCase]));
+    
+    setCurrentStep(5);
+  };
+
+  const renderStep1 = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+          <input
+            type="text"
+            value={patientData.firstName}
+            onChange={(e) => setPatientData({...patientData, firstName: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            placeholder="First Name"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+          <input
+            type="text"
+            value={patientData.lastName}
+            onChange={(e) => setPatientData({...patientData, lastName: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            placeholder="Last Name"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">File Number (Optional)</label>
+        <input
+          type="text"
+          value={patientData.fileNumber}
+          onChange={(e) => setPatientData({...patientData, fileNumber: e.target.value})}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+          placeholder="Enter file number"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+          <select
+            value={patientData.gender}
+            onChange={(e) => setPatientData({...patientData, gender: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+          <input
+            type="date"
+            value={patientData.dob}
+            onChange={(e) => setPatientData({...patientData, dob: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Address</label>
+        <textarea
+          value={patientData.address}
+          onChange={(e) => setPatientData({...patientData, address: e.target.value})}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none h-20 resize-none"
+          placeholder="Enter shipping address"
+        />
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      {/* Images Grid */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Images</h3>
+        <div className="grid grid-cols-4 gap-4">
+          {IMAGE_SLOTS.map((slot) => (
+            <div key={slot.id} className="relative">
+              <div className={`aspect-square rounded-lg border-2 border-dashed ${images[slot.id] ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50'} flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition-colors overflow-hidden`}>
+                {images[slot.id] ? (
+                  <img src={images[slot.id]} alt={slot.label} className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="text-xs text-gray-500 text-center px-2">{slot.labelAr}</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(slot.id, e.target.files[0])}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Impressions */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Impressions</h3>
+        <div className="flex gap-4 mb-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={impressions.type === 'digital'}
+              onChange={() => setImpressions({...impressions, type: 'digital'})}
+              className="text-green-500"
+            />
+            <span>Digital</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={impressions.type === 'physical'}
+              onChange={() => setImpressions({...impressions, type: 'physical'})}
+              className="text-green-500"
+            />
+            <span>Physical</span>
+          </label>
+        </div>
+        
+        {impressions.type === 'digital' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
+              <h4 className="font-medium text-gray-700 mb-2">Upper Impression</h4>
+              <p className="text-sm text-gray-500 mb-2">{impressions.upperStl?.name || 'Upload 3D Scan'}</p>
+              <input
+                type="file"
+                accept=".stl,.obj,.ply"
+                onChange={(e) => setImpressions({...impressions, upperStl: e.target.files?.[0] || null})}
+                className="hidden"
+                id="upper-stl"
+              />
+              <label htmlFor="upper-stl" className="px-4 py-2 bg-green-500 text-white rounded-lg cursor-pointer hover:bg-green-600 inline-block">
+                Choose File
+              </label>
+            </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
+              <h4 className="font-medium text-gray-700 mb-2">Lower Impression</h4>
+              <p className="text-sm text-gray-500 mb-2">{impressions.lowerStl?.name || 'Upload 3D Scan'}</p>
+              <input
+                type="file"
+                accept=".stl,.obj,.ply"
+                onChange={(e) => setImpressions({...impressions, lowerStl: e.target.files?.[0] || null})}
+                className="hidden"
+                id="lower-stl"
+              />
+              <label htmlFor="lower-stl" className="px-4 py-2 bg-green-500 text-white rounded-lg cursor-pointer hover:bg-green-600 inline-block">
+                Choose File
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-bold text-gray-900">Prescription</h3>
+      
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          { key: 'treatArches', label: 'Treat Arches', options: ['both', 'upper', 'lower'] },
+          { key: 'upperMidline', label: 'Upper Midline', options: ['improve', 'maintain', 'center'] },
+          { key: 'lowerMidline', label: 'Lower Midline', options: ['improve', 'maintain', 'center'] },
+          { key: 'overjet', label: 'Overjet', options: ['improve', 'maintain'] },
+          { key: 'overbite', label: 'Overbite', options: ['improve', 'maintain'] },
+          { key: 'canineRelationship', label: 'Canine Relationship', options: ['improve', 'maintain'] },
+          { key: 'molarRelationship', label: 'Molar Relationship', options: ['maintain', 'improve'] },
+          { key: 'posteriorCrossbite', label: 'Posterior Crossbite', options: ['maintain', 'correct'] },
+          { key: 'ipr', label: 'IPR', options: ['ifNeeded', 'none', 'all'] },
+          { key: 'attachments', label: 'Attachments', options: ['ifNeeded', 'none', 'all'] },
+          { key: 'procline', label: 'Procline', options: ['ifNeeded', 'none'] },
+          { key: 'expand', label: 'Expand', options: ['ifNeeded', 'none'] },
+          { key: 'distalize', label: 'Distalize', options: ['ifNeeded', 'none'] },
+        ].map((field) => (
+          <div key={field.key}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+            <select
+              value={prescription[field.key as keyof typeof prescription] as string}
+              onChange={(e) => setPrescription({...prescription, [field.key]: e.target.value})}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            >
+              {field.options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Chief Complaint</label>
+        <textarea
+          value={prescription.chiefComplaint}
+          onChange={(e) => setPrescription({...prescription, chiefComplaint: e.target.value})}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none h-20 resize-none"
+          placeholder="الرجاء عمل خطة علاجية مناسبة"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+        <textarea
+          value={prescription.additionalNotes}
+          onChange={(e) => setPrescription({...prescription, additionalNotes: e.target.value})}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none h-20 resize-none"
+          placeholder="ملاحظات إضافية"
+        />
+      </div>
+
+      {/* Teeth Chart */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h4 className="font-bold text-gray-900 mb-4">Teeth Selection</h4>
+        <div className="grid grid-cols-2 gap-8">
+          {/* Do Not Move */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Do Not Move These Teeth</h5>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({length: 32}, (_, i) => i + 1).map((tooth) => (
+                <button
+                  key={tooth}
+                  onClick={() => {
+                    const current = prescription.doNotMove;
+                    setPrescription({
+                      ...prescription,
+                      doNotMove: current.includes(tooth) 
+                        ? current.filter(t => t !== tooth)
+                        : [...current, tooth]
+                    });
+                  }}
+                  className={`w-8 h-8 rounded text-xs font-medium ${
+                    prescription.doNotMove.includes(tooth)
+                      ? 'bg-red-500 text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {tooth}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Avoid Attachments */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Avoid Attachments Teeth</h5>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({length: 32}, (_, i) => i + 1).map((tooth) => (
+                <button
+                  key={tooth}
+                  onClick={() => {
+                    const current = prescription.avoidAttachments;
+                    setPrescription({
+                      ...prescription,
+                      avoidAttachments: current.includes(tooth)
+                        ? current.filter(t => t !== tooth)
+                        : [...current, tooth]
+                    });
+                  }}
+                  className={`w-8 h-8 rounded text-xs font-medium ${
+                    prescription.avoidAttachments.includes(tooth)
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {tooth}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Extract */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Extract Teeth</h5>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({length: 32}, (_, i) => i + 1).map((tooth) => (
+                <button
+                  key={tooth}
+                  onClick={() => {
+                    const current = prescription.extract;
+                    setPrescription({
+                      ...prescription,
+                      extract: current.includes(tooth)
+                        ? current.filter(t => t !== tooth)
+                        : [...current, tooth]
+                    });
+                  }}
+                  className={`w-8 h-8 rounded text-xs font-medium ${
+                    prescription.extract.includes(tooth)
+                      ? 'bg-red-700 text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {tooth}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Keep Spaces */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Keep Spaces For These Teeth</h5>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({length: 32}, (_, i) => i + 1).map((tooth) => (
+                <button
+                  key={tooth}
+                  onClick={() => {
+                    const current = prescription.keepSpaces;
+                    setPrescription({
+                      ...prescription,
+                      keepSpaces: current.includes(tooth)
+                        ? current.filter(t => t !== tooth)
+                        : [...current, tooth]
+                    });
+                  }}
+                  className={`w-8 h-8 rounded text-xs font-medium ${
+                    prescription.keepSpaces.includes(tooth)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  {tooth}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-bold text-gray-900">Terms & Agreement</h3>
+      
+      <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+        <h4 className="font-medium text-gray-900">Terms and Conditions</h4>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          By submitting this case, you agree to the following terms:
+        </p>
+        <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
+          <li>All patient information provided is accurate and complete.</li>
+          <li>The digital scans/images provided are of diagnostic quality.</li>
+          <li>You have obtained proper patient consent for treatment.</li>
+          <li>You understand the treatment plan may be modified based on clinical evaluation.</li>
+          <li>Delivery times are estimates and may vary based on case complexity.</li>
+        </ul>
+      </div>
+
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="w-5 h-5 text-green-500 rounded focus:ring-green-500"
+        />
+        <span className="text-sm text-gray-700">I agree to the terms and conditions</span>
+      </label>
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="text-center py-12">
+      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Submission Completed!</h2>
+      <p className="text-gray-600 mb-8">Your case has been submitted successfully.</p>
+      <div className="flex gap-4 justify-center">
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+        >
+          Go to Dashboard
+        </button>
+        <button
+          onClick={() => {
+            setCurrentStep(1);
+            setPatientData({ firstName: '', lastName: '', fileNumber: '', gender: 'male', dob: '', address: '' });
+            setImages({});
+            setImpressions({ type: 'digital', upperStl: null, lowerStl: null });
+            setAgreed(false);
+          }}
+          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Submit Another Case
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" dir="rtl">
+    <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Header */}
-      <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Elite Aligner" className="w-10 h-10 rounded-full" />
-            <h1 className="text-xl font-bold text-white">
-              Elite <span className="text-green-400">Aligner</span>
-            </h1>
+            <img src="/logo.png" alt="Elite Aligner" className="w-10 h-10 rounded-full bg-white" />
+            <h1 className="text-lg font-bold">Elite Aligner</h1>
           </div>
           <button 
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+            className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm"
           >
-            العودة للرئيسية
+            العودة
           </button>
         </div>
       </header>
 
-      {/* Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-3xl font-bold text-white mb-8 text-center">إضافة حالة جديدة</h1>
-        
-        <form onSubmit={handleSubmit} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 space-y-8">
-          
-          {/* اسم المريض */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              اسم المريض *
-            </label>
-            <input
-              type="text"
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50"
-              placeholder="اسم المريض الكامل"
-              required
-            />
-          </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Case Submission</h1>
 
-          {/* رفع ملفات STL */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* فك علوي */}
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors bg-gray-50">
-              <FileBox className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-700 mb-2">الفك العلوي</h3>
-              <p className="text-gray-500 mb-4">رفع ملف STL للفك العلوي</p>
-              <input
-                type="file"
-                accept=".stl"
-                onChange={(e) => setUpperJaw(e.target.files?.[0] || null)}
-                className="hidden"
-                id="upper-jaw"
-              />
-              <label 
-                htmlFor="upper-jaw"
-                className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
-              >
-                <Upload className="w-4 h-4 ml-2" />
-                {upperJaw ? upperJaw.name : 'اختيار الملف'}
-              </label>
-            </div>
-
-            {/* فك سفلي */}
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors bg-gray-50">
-              <FileBox className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-700 mb-2">الفك السفلي</h3>
-              <p className="text-gray-500 mb-4">رفع ملف STL للفك السفلي</p>
-              <input
-                type="file"
-                accept=".stl"
-                onChange={(e) => setLowerJaw(e.target.files?.[0] || null)}
-                className="hidden"
-                id="lower-jaw"
-              />
-              <label 
-                htmlFor="lower-jaw"
-                className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
-              >
-                <Upload className="w-4 h-4 ml-2" />
-                {lowerJaw ? lowerJaw.name : 'اختيار الملف'}
-              </label>
-            </div>
-          </div>
-
-          {/* ملاحظات */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ملاحظات الطبيب
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 h-32 resize-none"
-              placeholder="أي ملاحظات إضافية عن الحالة..."
-            />
-          </div>
-
-          {/* معاينة 3D */}
-          {previewUrl && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-green-600" />
-                  <span className="text-green-700 font-medium">جاهز للمعاينة ثلاثية الأبعاد</span>
+        {/* Steps Progress */}
+        <div className="flex mb-8">
+          {STEPS.map((step, index) => (
+            <div key={step.id} className="flex-1 relative">
+              <div className={`flex items-center ${index < STEPS.length - 1 ? 'after:content-[""] after:absolute after:top-1/2 after:left-1/2 after:w-full after:h-0.5 after:bg-gray-200' : ''}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold relative z-10 ${
+                  currentStep > step.id ? 'bg-green-500 text-white' :
+                  currentStep === step.id ? 'bg-green-600 text-white' :
+                  'bg-gray-200 text-gray-500'
+                }`}>
+                  {currentStep > step.id ? '✓' : step.id}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push(previewUrl)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  عرض 3D
-                </button>
               </div>
+              <p className={`text-xs mt-2 text-center ${currentStep >= step.id ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
+                {step.title}
+              </p>
             </div>
-          )}
+          ))}
+        </div>
 
-          {/* أزرار */}
-          <div className="flex gap-4">
+        {/* Step Content */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+          {currentStep === 4 && renderStep4()}
+          {currentStep === 5 && renderStep5()}
+        </div>
+
+        {/* Navigation Buttons */}
+        {currentStep < 5 && (
+          <div className="flex justify-between mt-6">
             <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all disabled:opacity-50 shadow-lg font-bold"
+              onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+              disabled={currentStep === 1}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
             >
-              {loading ? 'جاري الحفظ...' : 'حفظ الحالة'}
+              Previous
             </button>
             
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
-            >
-              إلغاء
-            </button>
+            {currentStep === 4 ? (
+              <button
+                onClick={handleSubmit}
+                disabled={!agreed}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+              >
+                Submit Case
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentStep(currentStep + 1)}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              >
+                Continue
+              </button>
+            )}
           </div>
-        </form>
+        )}
       </main>
     </div>
   );
