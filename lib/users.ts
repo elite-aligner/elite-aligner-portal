@@ -1,6 +1,10 @@
 // @ts-nocheck
-// ✅ قائمة المستخدمين المشتركة (في الذاكرة)
-export const USERS: any[] = [
+// ✅ قائمة المستخدمين المشتركة - تستخدم global لتخزين across requests
+declare global {
+  var __USERS__: any[] | undefined;
+}
+
+export const USERS: any[] = globalThis.__USERS__ || [
   {
     id: '1',
     email: 'panorama_farea@outlook.com',
@@ -9,3 +13,8 @@ export const USERS: any[] = [
     role: 'doctor'
   }
 ];
+
+// ✅ حفظ في global
+if (!globalThis.__USERS__) {
+  globalThis.__USERS__ = USERS;
+}

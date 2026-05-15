@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 
-// ✅ استخدم القيمة الثابتة مباشرة (للتأكد من أنها تعمل)
+// ✅ للـ localhost فقط - لا يستخدم Supabase على Vercel
 const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co'
 const supabaseKey = 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCa...'
 
