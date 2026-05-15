@@ -1,5 +1,10 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: Request) {
   try {
@@ -12,34 +17,22 @@ export async function POST(request: Request) {
       );
     }
     
-    // ✅ قراءة من LocalStorage (عبر globalThis للـ Server)
-    const usersJson = (globalThis as any).usersStorage || '[]';
-    const users = JSON.parse(usersJson);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     
-    // ✅ البحث في LocalStorage
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (!user) {
+    if (error) {
       return NextResponse.json(
-        { error: 'Invalid email or password' }, 
+        { error: error.message }, 
         { status: 401 }
       );
     }
     
-    const token = btoa(`${user.id}:${Date.now()}`);
-    
     return NextResponse.json({
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role || 'doctor'
-      },
-      session: {
-        access_token: token,
-        expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000
-      }
+      user: data.user,
+      session: data.session,
     });
     
   } catch (err: any) {
