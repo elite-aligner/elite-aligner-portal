@@ -12,10 +12,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    // ✅ إنشاء مستخدم باستخدام fetch
     const authResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
       method: 'POST',
       headers: {
@@ -32,7 +31,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authData.message || 'Failed to create user' }, { status: 400 });
     }
 
-    // ✅ إضافة للجدول doctors
     const doctorResponse = await fetch(`${supabaseUrl}/rest/v1/doctors`, {
       method: 'POST',
       headers: {

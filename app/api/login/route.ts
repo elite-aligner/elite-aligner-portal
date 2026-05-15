@@ -12,10 +12,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Required' }, { status: 400 });
     }
     
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    // ✅ URL مباشر (لا يعتمد على Environment Variables)
+    const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    // ✅ استخدام fetch بدلاً من supabaseServer
     const authResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
       headers: {
@@ -32,7 +32,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authData.message || 'Invalid credentials' }, { status: 401 });
     }
 
-    // ✅ جلب بيانات الطبيب
     const doctorResponse = await fetch(`${supabaseUrl}/rest/v1/doctors?email=eq.${email}&select=*`, {
       headers: {
         'apikey': supabaseKey,
