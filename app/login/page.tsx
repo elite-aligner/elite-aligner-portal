@@ -29,13 +29,27 @@ export default function LoginPage() {
       
       if (data.error) throw new Error(data.error);
 
+      // ✅ تخزين التوكن في الكوكيز
       if (data.session?.access_token) {
         const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
         document.cookie = `elite-aligner-auth-token=${encodeURIComponent(data.session.access_token)}; expires=${expires}; path=/; SameSite=Lax`;
       }
 
+      // ✅ تخزين الدور في الكوكيز (مهم للـ Middleware!)
+      if (data.user?.role) {
+        const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
+        document.cookie = `elite-aligner-role=${encodeURIComponent(data.user.role)}; expires=${expires}; path=/; SameSite=Lax`;
+      }
+
+      // ✅ تخزين في LocalStorage للاستخدام في الصفحات
       localStorage.setItem('elite-aligner-user', JSON.stringify(data.user));
-      router.push('/dashboard');
+
+      // ✅ التوجيه حسب الدور
+      if (data.user?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/doctor');
+      }
       
     } catch (err: any) {
       setError(err.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
@@ -46,7 +60,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
-      {/* ✅ خلفية الشعار */}
+      {/* خلفية الشعار */}
       <div className="absolute inset-0 opacity-5">
         <img src="/logo.png" alt="" className="w-full h-full object-contain" />
       </div>
