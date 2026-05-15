@@ -1,9 +1,9 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 
-// ✅ للمتصفح: استخدم NEXT_PUBLIC_ variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sknybbyxencuhbenshk.supabase.co'
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// ✅ استخدم القيمة الثابتة مباشرة (للتأكد من أنها تعمل)
+const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co'
+const supabaseKey = 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCa...'
 
 let supabaseInstance: any = null
 
