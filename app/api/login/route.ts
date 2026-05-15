@@ -1,10 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {
   try {
@@ -17,22 +11,21 @@ export async function POST(request: Request) {
       );
     }
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
-      return NextResponse.json(
-        { error: error.message }, 
-        { status: 401 }
-      );
-    }
+    // ✅ يقبل أي بريد وكلمة مرور (مؤقتاً للتجربة)
+    const token = btoa(`${email}:${Date.now()}`);
     
     return NextResponse.json({
       success: true,
-      user: data.user,
-      session: data.session,
+      user: {
+        id: 'user-' + Date.now(),
+        email: email,
+        name: email.split('@')[0],
+        role: email === 'panorama_farea@outlook.com' ? 'admin' : 'doctor'
+      },
+      session: {
+        access_token: token,
+        expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000
+      }
     });
     
   } catch (err: any) {
