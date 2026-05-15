@@ -65,6 +65,14 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm">Dr. {user.name}</span>
+            {user?.email === 'panorama_farea@outlook.com' && (
+              <Link 
+                href="/admin"
+                className="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm"
+              >
+                Admin
+              </Link>
+            )}
             <button 
               onClick={handleLogout}
               className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm"
@@ -160,14 +168,18 @@ export default function DashboardPage() {
                   <tr key={caseItem.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900">#{index + 1}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/cases/${caseItem.id}`} className="flex items-center gap-3 hover:opacity-80">
                         <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-xs">
                           {caseItem.patientName?.charAt(0)}
                         </div>
-                        <span className="text-sm font-medium text-gray-900">{caseItem.patientName}</span>
-                      </div>
+                        <span className="text-sm font-medium text-gray-900 hover:text-green-600">{caseItem.patientName}</span>
+                      </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">#{caseItem.id?.slice(-10)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      <Link href={`/cases/${caseItem.id}`} className="hover:text-green-600">
+                        #{caseItem.id?.slice(-10)}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{caseItem.createdAt}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(caseItem.status)}`}>
@@ -177,7 +189,7 @@ export default function DashboardPage() {
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <Link 
-                          href={`/case/${caseItem.id}`}
+                          href={`/cases/${caseItem.id}`}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                           title="View Details"
                         >
