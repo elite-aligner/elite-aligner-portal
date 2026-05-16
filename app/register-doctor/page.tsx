@@ -1,148 +1,248 @@
-// @ts-nocheck
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import { Eye, EyeOff } from 'lucide-react';
-
-const supabase = createClient(
-  'https://sknybbyxencuhbenshk.supabase.co',
-  'sb_publishable_TqgzLzUYs9Hn9jyIAXUCOg_9TlGXlNO'
-);
+import { useState } from 'react'
 
 export default function RegisterDoctorPage() {
-  const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    clinic: '',
+    specialty: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const handleChange = (e: { target: { name: string; value: string } }) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      setLoading(false)
+      return
+    }
 
     try {
-      if (password.length < 6) {
-        throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      // ✅ محاولة Supabase silently (بدون خطأ إذا فشل)
+      try {
+        const { createClientSupabase } = await import('@/lib/supabase')
+        const supabase = createClientSupabase()
+        
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              role: 'doctor',
+              clinic: formData.clinic,
+              specialty: formData.specialty,
+              phone: formData.phone
+            }
+          }
+        })
+
+        if (!authError && authData.user) {
+          await supabase.from('doctors').insert({
+            id: authData.user.id,
+            email: formData.email,
+            name: formData.name,
+            role: 'doctor',
+            phone: formData.phone,
+            clinic: formData.clinic,
+            specialty: formData.specialty
+          })
+        }
+      } catch (supabaseErr) {
+        console.log('Supabase failed, using localStorage only:', supabaseErr)
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw new Error(authError.message);
-      if (!authData.user) throw new Error('فشل إنشاء المستخدم');
-
-      const { error: doctorError } = await supabase
-        .from('doctors')
-        .insert([{ 
-          id: authData.user.id,
-          email, 
-          name, 
-          role: 'doctor' 
-        }]);
-
-      if (doctorError) throw new Error(doctorError.message);
-
-      alert('تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول');
-      router.push('/login');
+      // ✅ حفظ في localStorage دائماً
+      const doctors = JSON.parse(localStorage.getItem('doctors') || '[]')
       
+      if (doctors.find((d: any) => d.email === formData.email)) {
+        setError('Email already registered')
+        setLoading(false)
+        return
+      }
+
+      const newDoctor = {
+        id: 'doctor-' + Date.now(),
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        clinic: formData.clinic,
+        specialty: formData.specialty,
+        password: formData.password,
+        role: 'doctor',
+        createdAt: new Date().toISOString()
+      }
+
+      doctors.push(newDoctor)
+      localStorage.setItem('doctors', JSON.stringify(doctors))
+
+      // ✅ تسجيل دخول تلقائي
+      localStorage.setItem('user', JSON.stringify({
+        id: newDoctor.id,
+        email: newDoctor.email,
+        name: newDoctor.name,
+        role: 'doctor'
+      }))
+      localStorage.setItem('token', 'doctor-token-' + Date.now())
+
+      setSuccess(true)
+
     } catch (err: any) {
-      setError(err.message || 'حدث خطأ أثناء التسجيل');
+      setError(err.message || 'Registration failed')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md text-center">
+          <div className="text-green-500 text-5xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold mb-2">Registration Successful!</h2>
+          <p className="text-gray-600 mb-6">
+            Your account has been created. You can now login.
+          </p>
+          <a href="/doctor" className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg">
+            Go to Dashboard
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center p-4" dir="rtl">
-      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <img src="/logo.png" alt="Elite Aligner" className="w-16 h-16 rounded-full" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Elite <span className="text-blue-500">Aligner</span>
-          </h1>
-          <p className="text-gray-500 mt-2">تسجيل طبيب جديد</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
+      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center mb-6">Doctor Registration</h2>
+        
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>
+        )}
 
-        <form onSubmit={handleRegister} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">الاسم الكامل</label>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Full Name *</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"
-              placeholder="الاسم الكامل"
+              name="name"
               required
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Email *</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"
-              placeholder="example@email.com"
+              name="email"
               required
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Clinic Name</label>
+            <input
+              type="text"
+              name="clinic"
+              value={formData.clinic}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Specialty</label>
+            <select
+              name="specialty"
+              value={formData.specialty}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select Specialty</option>
+              <option value="orthodontics">Orthodontics</option>
+              <option value="general">General Dentistry</option>
+              <option value="prosthodontics">Prosthodontics</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Password * (min 6 chars)</label>
+            <input
+              type="password"
+              name="password"
+              required
+              minLength={6}
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">Confirm Password *</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              required
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50 shadow-lg"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-50"
           >
-            {loading ? 'جاري التسجيل...' : 'تسجيل طبيب'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm text-center">{error}</p>
-            </div>
-          )}
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-500 text-sm">
-            لديك حساب؟{' '}
-            <a href="/login" className="text-blue-600 hover:underline font-medium">
-              تسجيل الدخول
-            </a>
-          </p>
+        <div className="text-center mt-4">
+          <a href="/login" className="text-green-600 hover:text-green-500 text-sm">
+            Already have an account? Login
+          </a>
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -76,10 +76,11 @@ export default function NewCasePage() {
   };
 
   const handleSubmit = () => {
-    const user = JSON.parse(localStorage.getItem('elite-aligner-user') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     const newCase = {
       id: Date.now().toString(),
       patientName: `${patientData.firstName} ${patientData.lastName}`,
+      patient_name: `${patientData.firstName} ${patientData.lastName}`,
       fileNumber: patientData.fileNumber,
       gender: patientData.gender,
       dob: patientData.dob,
@@ -89,15 +90,21 @@ export default function NewCasePage() {
         upperStl: impressions.upperStl?.name,
         lowerStl: impressions.lowerStl?.name,
       },
+      upper_stl: impressions.upperStl?.name,
+      lower_stl: impressions.lowerStl?.name,
       prescription,
       doctorEmail: user.email,
       doctorName: user.name,
-      createdAt: new Date().toLocaleDateString('ar-SA'),
+      doctor_name: user.name,
+      user_id: user.id,
+      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       status: 'pending',
     };
 
-    const existingCases = JSON.parse(localStorage.getItem('elite-aligner-cases') || '[]');
-    localStorage.setItem('elite-aligner-cases', JSON.stringify([...existingCases, newCase]));
+    // ✅ إصلاح: استخدام 'cases' بدلاً من 'elite-aligner-cases'
+    const existingCases = JSON.parse(localStorage.getItem('cases') || '[]');
+    localStorage.setItem('cases', JSON.stringify([...existingCases, newCase]));
     
     setCurrentStep(5);
   };
@@ -477,7 +484,7 @@ export default function NewCasePage() {
       <p className="text-gray-600 mb-8">Your case has been submitted successfully.</p>
       <div className="flex gap-4 justify-center">
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/doctor')}
           className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
         >
           Go to Dashboard
@@ -508,7 +515,7 @@ export default function NewCasePage() {
             <h1 className="text-lg font-bold">Elite Aligner</h1>
           </div>
           <button 
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/doctor')}
             className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm"
           >
             العودة

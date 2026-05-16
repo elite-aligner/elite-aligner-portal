@@ -1,23 +1,12 @@
-// @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 
-// ✅ للـ localhost فقط - لا يستخدم Supabase على Vercel
+// ✅ استخدم المفاتيح مباشرة (Hardcoded) - يعمل في Client و Server
 const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co'
-const supabaseKey = 'sb_publishable_0drLNWdB48knxLuh7bzlvQ_nWRCa...'
+const supabaseKey = 'sb_publishable_TqgzlZUYs9Hn9jy1AXUC0g_9T1CXlN0'
 
-let supabaseInstance: any = null
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
+// ✅ Auth Client-side
 export const createClientSupabase = () => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        storageKey: 'elite-aligner-auth-token',
-        autoRefreshToken: true,
-        persistSession: true,
-      },
-    })
-  }
-  return supabaseInstance
+  return createClient(supabaseUrl, supabaseKey)
 }
-
-export const supabase = createClientSupabase()

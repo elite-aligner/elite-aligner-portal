@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, LogOut, Eye, Download, Users, FolderOpen, CheckCircle, Clock } from 'lucide-react';
-import { createClientSupabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -17,8 +17,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = createClientSupabase();
-      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -59,7 +57,6 @@ export default function AdminPage() {
   }, [router]);
 
   const handleLogout = async () => {
-    const supabase = createClientSupabase();
     await supabase.auth.signOut();
     
     document.cookie = 'elite-aligner-auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
