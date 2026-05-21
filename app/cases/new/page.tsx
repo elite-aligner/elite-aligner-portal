@@ -96,7 +96,7 @@ export default function NewCasePage() {
     }
   };
 
-  // ✅ التعديل الوحيد: استخدام API Route بدلاً من Supabase client مباشرة
+  // ✅ استخدام API Route (Server-side) — يعمل مع Service Role Key
   const uploadFileToStorage = async (file: File, bucket: string, path: string) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -122,7 +122,7 @@ export default function NewCasePage() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     try {
-      // ✅ رفع الصور لـ Supabase Storage عبر API Route
+      // ✅ رفع الصور عبر API Route
       const uploadedImages: any = {};
       for (const [slotId, file] of Object.entries(imageFiles)) {
         if (file instanceof File) {
@@ -132,7 +132,7 @@ export default function NewCasePage() {
         }
       }
 
-      // ✅ رفع STL لـ Supabase Storage عبر API Route
+      // ✅ رفع STL عبر API Route
       let upperStlUrl = '';
       let lowerStlUrl = '';
       
@@ -146,10 +146,7 @@ export default function NewCasePage() {
         lowerStlUrl = await uploadFileToStorage(impressions.lowerStl, 'stl-file', path);
       }
 
-      // ✅ إنشاء أسماء الملفات للـ public/files/ (احتياطي)
-      const upperStlFileName = impressions.upperStlName ? `upper-${Date.now()}-${impressions.upperStlName}` : '';
-      const lowerStlFileName = impressions.lowerStlName ? `lower-${Date.now()}-${impressions.lowerStlName}` : '';
-      
+      // ✅ إنشاء الحالة
       const newCase = {
         id: Date.now().toString(),
         patientName: `${patientData.firstName} ${patientData.lastName}`,
@@ -158,15 +155,6 @@ export default function NewCasePage() {
         gender: patientData.gender,
         dob: patientData.dob,
         images: { ...images, ...uploadedImages },
-        impressions: {
-          type: impressions.type,
-          upperStl: upperStlFileName,
-          lowerStl: lowerStlFileName,
-        },
-        upper_stl: upperStlFileName,
-        lower_stl: lowerStlFileName,
-        upperStl: upperStlFileName,
-        lowerStl: lowerStlFileName,
         upper_stl_url: upperStlUrl,
         lower_stl_url: lowerStlUrl,
         prescription,
@@ -179,9 +167,9 @@ export default function NewCasePage() {
         status: 'pending',
       };
 
-      // ✅ حفظ في Supabase عبر API Route (أو مباشرة إذا كان يعمل)
+      // ✅ إرسال إلى API Route /api/cases
       try {
-        const supabaseResponse = await fetch('/api/cases', {
+        const response = await fetch('/api/cases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -206,24 +194,23 @@ export default function NewCasePage() {
           }),
         });
 
-        if (!supabaseResponse.ok) {
-          console.warn('Supabase insert failed, saving to localStorage only');
+        if (!response.ok) {
+          console.warn('API /api/cases failed, saving to localStorage only');
         }
-      } catch (supabaseError) {
-        console.warn('Supabase insert error:', supabaseError);
+      } catch (apiError) {
+        console.warn('API error:', apiError);
       }
 
-      // ✅ حفظ في localStorage (احتياطي)
+      // ✅ حفظ في LocalStorage (دائماً)
       const existingCases = JSON.parse(localStorage.getItem('cases') || '[]');
       localStorage.setItem('cases', JSON.stringify([...existingCases, newCase]));
       
       setCurrentStep(5);
     } catch (error) {
       console.error('Submit error:', error);
-      alert('حدث خطأ أثناء الإرسال. تم الحفظ محلياً فقط.');
+      alert('حدث خطأ أثناء رفع الملفات. تم الحفظ محلياً فقط.');
       
-      // حفظ في localStorage حتى لو فشل Supabase
-      const existingCases = JSON.parse(localStorage.getItem('cases') || '[]');
+      // Fallback
       const fallbackCase = {
         id: Date.now().toString(),
         patientName: `${patientData.firstName} ${patientData.lastName}`,
@@ -232,15 +219,6 @@ export default function NewCasePage() {
         gender: patientData.gender,
         dob: patientData.dob,
         images,
-        impressions: {
-          type: impressions.type,
-          upperStl: impressions.upperStlName,
-          lowerStl: impressions.lowerStlName,
-        },
-        upper_stl: impressions.upperStlName,
-        lower_stl: impressions.lowerStlName,
-        upperStl: impressions.upperStlName,
-        lowerStl: impressions.lowerStlName,
         prescription,
         doctorEmail: user.email,
         doctorName: user.name,
@@ -250,6 +228,7 @@ export default function NewCasePage() {
         created_at: new Date().toISOString(),
         status: 'pending',
       };
+      const existingCases = JSON.parse(localStorage.getItem('cases') || '[]');
       localStorage.setItem('cases', JSON.stringify([...existingCases, fallbackCase]));
       setCurrentStep(5);
     } finally {
@@ -257,6 +236,7 @@ export default function NewCasePage() {
     }
   };
 
+  // ... باقي الكود (renderStep1-5) كما هو ...
   const renderStep1 = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -327,7 +307,6 @@ export default function NewCasePage() {
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      {/* Images Grid */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-4">Images</h3>
         <div className="grid grid-cols-4 gap-4">
@@ -356,7 +335,6 @@ export default function NewCasePage() {
         </div>
       </div>
 
-      {/* Impressions */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-4">Impressions</h3>
         <div className="flex gap-4 mb-4">
@@ -481,11 +459,9 @@ export default function NewCasePage() {
         />
       </div>
 
-      {/* Teeth Chart */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h4 className="font-bold text-gray-900 mb-4">Teeth Selection</h4>
         <div className="grid grid-cols-2 gap-8">
-          {/* Do Not Move */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 mb-2">Do Not Move These Teeth</h5>
             <div className="flex flex-wrap gap-1">
@@ -513,7 +489,6 @@ export default function NewCasePage() {
             </div>
           </div>
 
-          {/* Avoid Attachments */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 mb-2">Avoid Attachments Teeth</h5>
             <div className="flex flex-wrap gap-1">
@@ -541,7 +516,6 @@ export default function NewCasePage() {
             </div>
           </div>
 
-          {/* Extract */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 mb-2">Extract Teeth</h5>
             <div className="flex flex-wrap gap-1">
@@ -569,7 +543,6 @@ export default function NewCasePage() {
             </div>
           </div>
 
-          {/* Keep Spaces */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 mb-2">Keep Spaces For These Teeth</h5>
             <div className="flex flex-wrap gap-1">
@@ -666,7 +639,6 @@ export default function NewCasePage() {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Header */}
       <header className="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -685,7 +657,6 @@ export default function NewCasePage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Case Submission</h1>
 
-        {/* Steps Progress */}
         <div className="flex mb-8">
           {STEPS.map((step, index) => (
             <div key={step.id} className="flex-1 relative">
@@ -705,7 +676,6 @@ export default function NewCasePage() {
           ))}
         </div>
 
-        {/* Step Content */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
@@ -714,7 +684,6 @@ export default function NewCasePage() {
           {currentStep === 5 && renderStep5()}
         </div>
 
-        {/* Navigation Buttons */}
         {currentStep < 5 && (
           <div className="flex justify-between mt-6">
             <button
