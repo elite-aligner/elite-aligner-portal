@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { 
   LogOut, 
   Plus, 
@@ -10,15 +11,11 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Filter,
   Download,
   MoreHorizontal,
   Stethoscope,
   Calendar,
-  FileText,
-  CheckCircle2,
-  Clock,
-  X
+  FileText
 } from 'lucide-react';
 
 export default function DoctorPage() {
@@ -30,11 +27,10 @@ export default function DoctorPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const casesPerPage = 8;
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const storedUser = localStorage.getItem('user');
       const token = localStorage.getItem('token');
       if (!storedUser || !token) { router.push('/login'); return; }
@@ -42,11 +38,21 @@ export default function DoctorPage() {
       if (userData.role === 'admin') { router.push('/dashboard'); return; }
       if (userData.role !== 'doctor') { router.push('/login'); return; }
       setDoctor(userData);
-      const storedCases = JSON.parse(localStorage.getItem('cases') || '[]');
-      const doctorCases = storedCases.filter((c: any) => c.user_id === userData.id || c.doctor_name === userData.name);
-      doctorCases.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-      setCases(doctorCases);
-      setFilteredCases(doctorCases);
+
+      // ✅ جلب من Supabase مباشرة (بدون API Route)
+      const { data: casesData, error: casesError } = await supabase
+        .from('cases')
+        .select('*')
+        .eq('doctor_id', userData.id)
+        .order('created_at', { ascending: false });
+
+      if (casesError) {
+        console.error('Error fetching cases:', casesError);
+      } else {
+        setCases(casesData || []);
+        setFilteredCases(casesData || []);
+      }
+
       setLoading(false);
     };
     checkAuth();
@@ -75,18 +81,12 @@ export default function DoctorPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'completed':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'pending':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'manufacturing':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'rejected':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-50 text-gray-600 border-gray-200';
+      case 'active': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'completed': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'manufacturing': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'rejected': return 'bg-red-50 text-red-700 border-red-200';
+      default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
 
@@ -101,7 +101,6 @@ export default function DoctorPage() {
     }
   };
 
-  // Pagination
   const indexOfLastCase = currentPage * casesPerPage;
   const indexOfFirstCase = indexOfLastCase - casesPerPage;
   const currentCases = filteredCases.slice(indexOfFirstCase, indexOfLastCase);
@@ -120,7 +119,6 @@ export default function DoctorPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]" dir="rtl">
-      {/* Navbar Invisalign Style */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between h-16 items-center">
@@ -136,24 +134,12 @@ export default function DoctorPage() {
                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">Doctor Portal</span>
                 </div>
               </div>
-              
-              {/* Navigation Links */}
               <div className="hidden md:flex items-center gap-1 mr-8">
-                <button className="px-4 py-2 text-sm font-medium text-[#0088a9] bg-[#0088a9]/5 rounded-lg border border-[#0088a9]/10">
-                  Dashboard
-                </button>
-                <button 
-                  onClick={() => router.push('/cases/new')}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0088a9] hover:bg-gray-50 rounded-lg transition-all"
-                >
-                  Submit Case
-                </button>
-                <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0088a9] hover:bg-gray-50 rounded-lg transition-all">
-                  Resources
-                </button>
+                <button className="px-4 py-2 text-sm font-medium text-[#0088a9] bg-[#0088a9]/5 rounded-lg border border-[#0088a9]/10">Dashboard</button>
+                <button onClick={() => router.push('/cases/new')} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0088a9] hover:bg-gray-50 rounded-lg transition-all">Submit Case</button>
+                <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0088a9] hover:bg-gray-50 rounded-lg transition-all">Resources</button>
               </div>
             </div>
-            
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="w-6 h-6 bg-[#0088a9]/10 rounded-full flex items-center justify-center">
@@ -161,10 +147,7 @@ export default function DoctorPage() {
                 </div>
                 <span className="text-sm text-gray-700">Dr. {doctor?.name}</span>
               </div>
-              <button 
-                onClick={handleLogout} 
-                className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all text-sm"
-              >
+              <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all text-sm">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Log Out</span>
               </button>
@@ -174,22 +157,16 @@ export default function DoctorPage() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Cases</h1>
             <p className="text-sm text-gray-500 mt-1">Manage and track your patient cases</p>
           </div>
-          <button 
-            onClick={() => router.push('/cases/new')}
-            className="flex items-center gap-2 px-6 py-3 bg-[#0088a9] text-white rounded-xl hover:bg-[#007a99] transition-all shadow-md shadow-[#0088a9]/20 font-medium text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            Submit New Case
+          <button onClick={() => router.push('/cases/new')} className="flex items-center gap-2 px-6 py-3 bg-[#0088a9] text-white rounded-xl hover:bg-[#007a99] transition-all shadow-md shadow-[#0088a9]/20 font-medium text-sm">
+            <Plus className="h-4 w-4" /> Submit New Case
           </button>
         </div>
 
-        {/* Stats Cards - Invisalign Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Cases', value: cases.length, color: 'bg-gray-900', textColor: 'text-gray-900' },
@@ -207,48 +184,23 @@ export default function DoctorPage() {
           ))}
         </div>
 
-        {/* Filters & Search Bar */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-            {/* Status Filter Pills */}
             <div className="flex gap-2 flex-wrap">
-              {[
-                { value: 'all', label: 'All' },
-                { value: 'active', label: 'Active' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'completed', label: 'Completed' },
-                { value: 'rejected', label: 'Rejected' },
-              ].map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setStatusFilter(filter.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    statusFilter === filter.value
-                      ? 'bg-[#0088a9] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
+              {[{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'pending', label: 'Pending' }, { value: 'completed', label: 'Completed' }, { value: 'rejected', label: 'Rejected' }].map((filter) => (
+                <button key={filter.value} onClick={() => setStatusFilter(filter.value)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${statusFilter === filter.value ? 'bg-[#0088a9] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   {statusFilter === filter.value && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   {filter.label}
                 </button>
               ))}
             </div>
-
-            {/* Search */}
             <div className="relative w-full lg:w-80">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search cases..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-9 pl-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-right focus:outline-none focus:ring-2 focus:ring-[#0088a9]/20 focus:border-[#0088a9] transition-all text-sm"
-              />
+              <input type="text" placeholder="Search cases..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pr-9 pl-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-right focus:outline-none focus:ring-2 focus:ring-[#0088a9]/20 focus:border-[#0088a9] transition-all text-sm" />
             </div>
           </div>
         </div>
 
-        {/* Cases Table - Invisalign Style */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -277,15 +229,11 @@ export default function DoctorPage() {
                 ) : (
                   currentCases.map((caseItem: any, index: number) => (
                     <tr key={caseItem.id} className="hover:bg-[#0088a9]/5 transition-colors group">
-                      <td className="px-4 py-4 text-sm text-gray-400 font-mono">
-                        {indexOfFirstCase + index + 1}
-                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-400 font-mono">{indexOfFirstCase + index + 1}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 bg-gradient-to-br from-[#0088a9]/10 to-[#0088a9]/20 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-bold text-[#0088a9]">
-                              {caseItem.patient_name?.charAt(0)}
-                            </span>
+                            <span className="text-sm font-bold text-[#0088a9]">{caseItem.patient_name?.charAt(0)}</span>
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-gray-900">{caseItem.patient_name}</p>
@@ -293,47 +241,15 @@ export default function DoctorPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
-                          #{caseItem.id?.slice(-8).toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                          {new Date(caseItem.created_at).toLocaleDateString('en-CA')}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusBadge(caseItem.status)}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${getStatusDot(caseItem.status)}`} />
-                          {caseItem.status?.charAt(0).toUpperCase() + caseItem.status?.slice(1) || 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500">
-                        {caseItem.case_type || 'Aligner'}
-                      </td>
+                      <td className="px-4 py-4"><span className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded-md">#{caseItem.id?.slice(-8).toUpperCase()}</span></td>
+                      <td className="px-4 py-4 text-sm text-gray-500"><div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-gray-400" />{new Date(caseItem.created_at).toLocaleDateString('en-CA')}</div></td>
+                      <td className="px-4 py-4"><span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusBadge(caseItem.status)}`}><span className={`w-1.5 h-1.5 rounded-full ${getStatusDot(caseItem.status)}`} />{caseItem.status?.charAt(0).toUpperCase() + caseItem.status?.slice(1) || 'Pending'}</span></td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{caseItem.case_type || 'Aligner'}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-1">
-                          <button 
-                            onClick={() => router.push(`/cases/${caseItem.id}`)}
-                            className="p-2 text-[#0088a9] hover:bg-[#0088a9]/10 rounded-lg transition-colors"
-                            title="View Case"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Download"
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="More"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
+                          <button onClick={() => router.push(`/cases/${caseItem.id}`)} className="p-2 text-[#0088a9] hover:bg-[#0088a9]/10 rounded-lg transition-colors" title="View Case"><Eye className="h-4 w-4" /></button>
+                          <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" title="Download"><Download className="h-4 w-4" /></button>
+                          <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" title="More"><MoreHorizontal className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -342,43 +258,15 @@ export default function DoctorPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/50">
-              <div className="text-sm text-gray-500">
-                Showing {indexOfFirstCase + 1} to {Math.min(indexOfLastCase, filteredCases.length)} of {filteredCases.length} cases
-              </div>
+              <div className="text-sm text-gray-500">Showing {indexOfFirstCase + 1} to {Math.min(indexOfLastCase, filteredCases.length)} of {filteredCases.length} cases</div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                
+                <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"><ChevronRight className="h-5 w-5" /></button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                      currentPage === page
-                        ? 'bg-[#0088a9] text-white shadow-md'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {page}
-                  </button>
+                  <button key={page} onClick={() => setCurrentPage(page)} className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${currentPage === page ? 'bg-[#0088a9] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                 ))}
-                
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
+                <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"><ChevronLeft className="h-5 w-5" /></button>
               </div>
             </div>
           )}
