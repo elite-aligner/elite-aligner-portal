@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase'; // ✅ إضافة Supabase
+import { supabase } from '@/lib/supabase';
 
 const STEPS = [
   { id: 1, title: 'Patient Information', titleAr: 'معلومات المريض' },
@@ -97,9 +97,6 @@ export default function NewCasePage() {
       setUploading(false);
     }
   };
-
-  // ... باقي الكود يبقى كما هو (renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, return)
-  // لا تغيير في باقي الملف
 
   const renderStep1 = () => (
     <div className="space-y-4">
