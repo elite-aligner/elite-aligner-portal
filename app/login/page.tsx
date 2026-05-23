@@ -20,37 +20,55 @@ export default function LoginPage() {
     setError('')
 
     try {
-      if (email === 'panorama_farea@outlook.com' && password === 'admin123') {
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-          if (!error && data.user) {
-            const userRole = data.user.user_metadata?.role || 'admin'
-            if (userRole === 'admin') { router.push('/dashboard'); return }
-          }
-        } catch (supabaseErr) { console.log('Supabase login failed, using local fallback') }
+      // ✅ التحقق من Supabase أولاً
+      const { data: doctor, error: doctorError } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single()
 
-        localStorage.setItem('user', JSON.stringify({ id: 'admin-1', email: 'panorama_farea@outlook.com', name: 'Admin', role: 'admin' }))
-        localStorage.setItem('token', 'admin-token-' + Date.now())
-        window.location.href = '/dashboard'
+      if (doctor) {
+        // ✅ طبيب موجود في Supabase
+        localStorage.setItem('user', JSON.stringify({
+          id: doctor.id,
+          email: doctor.email,
+          name: doctor.name,
+          role: doctor.role
+        }))
+        localStorage.setItem('token', doctor.role + '-token-' + Date.now())
+
+        if (doctor.role === 'admin') {
+          window.location.href = '/dashboard'
+        } else {
+          window.location.href = '/doctor'
+        }
         return
       }
 
+      // ❌ لا يوجد في Supabase — تحقق من LocalStorage (للأطباء القدامى)
       const doctors = JSON.parse(localStorage.getItem('doctors') || '[]')
-      const doctor = doctors.find((d: any) => d.email === email && d.password === password)
-      if (doctor) {
-        localStorage.setItem('user', JSON.stringify({ id: doctor.id, email: doctor.email, name: doctor.name, role: 'doctor' }))
+      const localDoctor = doctors.find((d: any) => d.email === email && d.password === password)
+      
+      if (localDoctor) {
+        localStorage.setItem('user', JSON.stringify({
+          id: localDoctor.id,
+          email: localDoctor.email,
+          name: localDoctor.name,
+          role: 'doctor'
+        }))
         localStorage.setItem('token', 'doctor-token-' + Date.now())
         window.location.href = '/doctor'
         return
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-      const userRole = data.user?.user_metadata?.role || 'doctor'
-      if (userRole === 'admin') { router.push('/dashboard') } else { router.push('/doctor') }
+      setError('Invalid email or password')
+
     } catch (err: any) {
       setError(err.message || 'Login failed')
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

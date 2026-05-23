@@ -1,8 +1,9 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co'
-const supabaseKey = 'sb_publishable_TqgzIZUYsHn9jy1AXUC0g_9T1CXIN0'
+// ✅ المشروع الجديد في London (Europe)
+const supabaseUrl = 'https://fqwbfisrcidyikssm.supabase.co'
+const supabaseKey = 'sb_publishable_eN2-t1lk8Cpx3TCwzhCWw_3rSVv...'
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 

@@ -2,40 +2,76 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || 'https://sknybbyxencuhbenshk.supabase.co');
-const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || '');
-const supabase = createClient(supabaseUrl, supabaseKey);
+// ✅ المشروع الجديد
+const supabaseUrl = 'https://fqwbfisrcidyikssm.supabase.co';
+const supabaseKey = 'sb_publishable_eN2-t1lk8Cpx3TCwzhCWw_3rSVv...';
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    if (!body.doctor_id || !body.patient_name) {
+      return NextResponse.json(
+        { error: 'Missing required fields: doctor_id, patient_name' }, 
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('cases')
-      .insert(body)
-      .select();
+      .insert([body])
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw new Error(error.message);
+    }
     
-    return NextResponse.json({ success: true, data: data[0] });
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error('Database error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to create case' }, 
+      { status: 500 }
+    );
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const doctorId = searchParams.get('doctor_id');
+    
+    let query = supabase
       .from('cases')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (doctorId) {
+      query = query.eq('doctor_id', doctorId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase select error:', error);
+      throw new Error(error.message);
+    }
     
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error('Database error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch cases' }, 
+      { status: 500 }
+    );
   }
 }
