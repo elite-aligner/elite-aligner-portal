@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 
-// ✅ استخدام Direct URL (الذي يعمل في Browser)
-const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co'
+// ✅ استخدام Pooler URL (لحل مشكلة DNS)
+const supabaseUrl = 'https://aws-1-us-east-1.pooler.supabase.com'
 const supabaseKey = 'sb_publishable_TqgzIZUYsHn9jy1AXUC0g_9T1CXIN0'
 
 export const supabase = createClient(supabaseUrl, supabaseKey)

@@ -1,6 +1,5 @@
 // @ts-nocheck
 // ⚠️ هذا الملف معطل — نستخدم Supabase مباشرة من Browser
-// بسبب مشاكل DNS في Vercel Serverless
 
 import { NextResponse } from 'next/server';
 
