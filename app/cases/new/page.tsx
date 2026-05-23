@@ -50,6 +50,7 @@ export default function NewCasePage() {
     else setImpressions(prev => ({ ...prev, lowerStl: file, lowerStlName: file.name }));
   };
 
+  // ✅ إرسال عبر Supabase مباشرة من Browser (بدون API Route)
   const handleSubmit = async () => {
     setUploading(true);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
