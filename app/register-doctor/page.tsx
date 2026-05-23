@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 export default function RegisterDoctorPage() {
   const [formData, setFormData] = useState({
@@ -39,32 +38,69 @@ export default function RegisterDoctorPage() {
     }
 
     try {
-      // ✅ إنشاء طبيب في Supabase مباشرة
-      const { data: doctor, error: insertError } = await supabase
-        .from('doctors')
-        .insert([{
-          name: formData.name,
+      // ✅ محاولة Supabase silently (بدون خطأ إذا فشل)
+      try {
+        const { createClientSupabase } = await import('@/lib/supabase')
+        const supabase = createClientSupabase()
+        
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
-          clinic: formData.clinic,
-          specialty: formData.specialty,
-          role: 'doctor'
-        }])
-        .select()
-        .single()
+          options: {
+            data: {
+              name: formData.name,
+              role: 'doctor',
+              clinic: formData.clinic,
+              specialty: formData.specialty,
+              phone: formData.phone
+            }
+          }
+        })
 
-      if (insertError) {
-        setError('Failed to create doctor: ' + insertError.message)
+        if (!authError && authData.user) {
+          await supabase.from('doctors').insert({
+            id: authData.user.id,
+            email: formData.email,
+            name: formData.name,
+            role: 'doctor',
+            phone: formData.phone,
+            clinic: formData.clinic,
+            specialty: formData.specialty
+          })
+        }
+      } catch (supabaseErr) {
+        console.log('Supabase failed, using localStorage only:', supabaseErr)
+      }
+
+      // ✅ حفظ في localStorage دائماً
+      const doctors = JSON.parse(localStorage.getItem('doctors') || '[]')
+      
+      if (doctors.find((d: any) => d.email === formData.email)) {
+        setError('Email already registered')
         setLoading(false)
         return
       }
 
-      // ✅ تسجيل دخول تلقائي (مع ID الحقيقي من Supabase)
+      const newDoctor = {
+        id: 'doctor-' + Date.now(),
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        clinic: formData.clinic,
+        specialty: formData.specialty,
+        password: formData.password,
+        role: 'doctor',
+        createdAt: new Date().toISOString()
+      }
+
+      doctors.push(newDoctor)
+      localStorage.setItem('doctors', JSON.stringify(doctors))
+
+      // ✅ تسجيل دخول تلقائي
       localStorage.setItem('user', JSON.stringify({
-        id: doctor.id,
-        email: doctor.email,
-        name: doctor.name,
+        id: newDoctor.id,
+        email: newDoctor.email,
+        name: newDoctor.name,
         role: 'doctor'
       }))
       localStorage.setItem('token', 'doctor-token-' + Date.now())

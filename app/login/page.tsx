@@ -56,13 +56,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden flex items-center justify-center p-4" dir="rtl">
       
-      {/* ✅ نفس خلفية الشعار من الصفحة الرئيسية */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <img src="/logo.png" alt="" className="w-full h-full object-contain" />
       </div>
 
       <div className="max-w-md w-full relative z-10">
-        {/* ✅ نفس الشعار من الصفحة الرئيسية */}
         <div className="text-center mb-8">
           <img src="/logo.png" alt="Elite Aligner" className="w-24 h-24 mx-auto mb-4 rounded-full" />
           <h1 className="text-3xl font-bold text-white mb-2">
@@ -71,7 +69,6 @@ export default function LoginPage() {
           <p className="text-gray-300 text-sm">PMC - Professional Medical Center</p>
         </div>
 
-        {/* ✅ نفس البطاقة الزجاجية من الصفحة الرئيسية */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
           <h2 className="text-2xl font-bold text-white text-center mb-6">تسجيل الدخول</h2>
           
