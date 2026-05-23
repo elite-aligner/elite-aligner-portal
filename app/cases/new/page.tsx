@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase'; // ✅ إضافة Supabase
 
 const STEPS = [
   { id: 1, title: 'Patient Information', titleAr: 'معلومات المريض' },
@@ -49,16 +50,16 @@ export default function NewCasePage() {
     else setImpressions(prev => ({ ...prev, lowerStl: file, lowerStlName: file.name }));
   };
 
-  // ✅ إرسال عبر API Route (بدلاً من Supabase Client مباشرة)
+  // ✅ إرسال عبر Supabase مباشرة (بدلاً من API Route)
   const handleSubmit = async () => {
     setUploading(true);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     try {
-      const response = await fetch('/api/cases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // ✅ استخدام Supabase مباشرة
+      const { data, error } = await supabase
+        .from('cases')
+        .insert([{
           doctor_id: user.id,
           patient_name: `${patientData.firstName} ${patientData.lastName}`,
           status: 'pending',
@@ -77,14 +78,17 @@ export default function NewCasePage() {
           file_number: patientData.fileNumber,
           upper_stl_url: impressions.upperStlName || '',
           lower_stl_url: impressions.lowerStlName || '',
-        }),
-      });
+          created_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save case');
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
       }
 
+      console.log('Case created:', data);
       setCurrentStep(5);
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -93,6 +97,9 @@ export default function NewCasePage() {
       setUploading(false);
     }
   };
+
+  // ... باقي الكود يبقى كما هو (renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, return)
+  // لا تغيير في باقي الملف
 
   const renderStep1 = () => (
     <div className="space-y-4">
