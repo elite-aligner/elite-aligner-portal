@@ -56,7 +56,6 @@ export default function NewCasePage() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     try {
-      // ✅ استخدام Supabase مباشرة
       const { data, error } = await supabase
         .from('cases')
         .insert([{

@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// نستخدم نفس المفاتيح الموجودة في lib/supabase.ts
-const supabaseUrl = 'https://sknybbyxencuhbenshk.supabase.co';
+// ✅ استخدام Pooler URL بدلاً من Direct URL (لحل مشكلة DNS)
+const supabaseUrl = 'https://aws-1-us-east-1.pooler.supabase.com';
 const supabaseKey = 'sb_publishable_TqgzIZUYsHn9jy1AXUC0g_9T1CXIN0';
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
